@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+  SUBSTITUTE
+}
+
+model User {
+  id               String             @id @default(cuid())
+  email            String             @unique
+  name             String
+  role             Role               @default(PLAYER)
+  status           UserStatus         @default(ACTIVE)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  password         String
+  language         String             @default("es")
+  timezone         String             @default("GMT-5")
+  assignedLineupId String?
+  discordId        String?
+  nationality      String?
+  phone            String?
+  realName         String?
+  changeLogs       ChangeLog[]
+  comments         Comment[]
+  evaluationsGiven PlayerEvaluation[]
+  playerProfile    PlayerProfile?
+  assignedLineup   Lineup?            @relation("StaffLineup", fields: [assignedLineupId], references: [id])
+}
+
+model ChangeLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  entityType String
+  entityId   String
+  details    String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model PlayerProfile {
+  id                  String             @id @default(cuid())
+  userId              String             @unique
+  position            Position
+  secondaryPosition   Position?
+  communicationLevel  Int?
+  personality         String?
+  opggUrl             String?
+  lineupId            String?
+  phone               String?
+  riotId              String?
+  championPool        ChampionPool[]
+  matchParticipations MatchParticipant[]
+  evaluations         PlayerEvaluation[]
+  lineup              Lineup?            @relation(fields: [lineupId], references: [id])
+  user                User               @relation(fields: [userId], references: [id])
+}
+
+model Lineup {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  matches     Match[]
+  players     PlayerProfile[]
+  staff       User[]          @relation("StaffLineup")
+}
+
+model PlayerEvaluation {
+  id              String        @id @default(cuid())
+  playerProfileId String
+  coachId         String
+  date            DateTime      @default(now())
+  communication   Int
+  mental          Int
+  mechanics       Int
+  gameKnowledge   Int
+  teamplay        Int
+  notes           String?
+  improvementGoal String?
+  strengths       String?
+  weaknesses      String?
+  coach           User          @relation(fields: [coachId], references: [id])
+  playerProfile   PlayerProfile @relation(fields: [playerProfileId], references: [id])
+}
+
+model ChampionPool {
+  id              String        @id @default(cuid())
+  playerProfileId String
+  championName    String
+  mastery         MasteryLevel
+  notes           String?
+  playerProfile   PlayerProfile @relation(fields: [playerProfileId], references: [id])
+}
+
+model Team {
+  id             String  @id @default(cuid())
+  name           String
+  isRival        Boolean @default(false)
+  notes          String?
+  matchesAsEnemy Match[] @relation("EnemyTeam")
+}
+
+model Patch {
+  id        String    @id @default(cuid())
+  version   String    @unique
+  startDate DateTime
+  endDate   DateTime?
+  matches   Match[]
+}
+
+model Match {
+  id           String             @id @default(cuid())
+  type         MatchType
+  date         DateTime
+  duration     Int?
+  result       MatchResult?
+  vodLink      String?
+  patchId      String?
+  enemyTeamId  String?
+  ourSide      Side?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  blueBans     String[]
+  redBans      String[]
+  gameVersion  String?
+  lineupId     String?
+  comments     Comment[]
+  enemyTeam    Team?              @relation("EnemyTeam", fields: [enemyTeamId], references: [id])
+  lineup       Lineup?            @relation(fields: [lineupId], references: [id])
+  patch        Patch?             @relation(fields: [patchId], references: [id])
+  analysis     MatchAnalysis?
+  participants MatchParticipant[]
+}
+
+model MatchAnalysis {
+  id           String  @id @default(cuid())
+  matchId      String  @unique
+  spawnNotes   String?
+  earlyNotes   String?
+  midNotes     String?
+  lateNotes    String?
+  winCondition String?
+  keyMistakes  String?
+  match        Match   @relation(fields: [matchId], references: [id])
+}
+
+model MatchParticipant {
+  id                  String          @id @default(cuid())
+  matchId             String
+  playerProfileId     String?
+  summonerName        String?
+  championName        String
+  position            Position
+  kills               Int?
+  deaths              Int?
+  assists             Int?
+  cs                  Int?
+  gold                Int?
+  damageDealt         Int?
+  isEnemy             Boolean         @default(false)
+  laneOpponent        String?
+  matchupScore        Int?
+  championRole        ChampionRole?
+  communicationRating Float?
+  laneAllocation      LaneAllocation?
+  laningRating        Float?
+  macroRating         Float?
+  matchupNotes        String?
+  mentalRating        Float?
+  microRating         Float?
+  positioningRating   Float?
+  teamfightRating     Float?
+  visionWards         Int             @default(0)
+  wardsPlaced         Int             @default(0)
+  match               Match           @relation(fields: [matchId], references: [id])
+  playerProfile       PlayerProfile?  @relation(fields: [playerProfileId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  userId    String
+  matchId   String?
+  match     Match?   @relation(fields: [matchId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Composition {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  winCondition String?
+  difficulty   Int?
+  topChamp     String?
+  jungleChamp  String?
+  midChamp     String?
+  adcChamp     String?
+  supportChamp String?
+  tags         String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ScheduleEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  type        String
+  createdAt   DateTime  @default(now())
+}
+
+enum Role {
+  ADMIN
+  COACH
+  PLAYER
+  STAFF
+}
+
+enum Position {
+  TOP
+  JUNGLE
+  MID
+  ADC
+  SUPPORT
+}
+
+enum LaneAllocation {
+  STRONG_SIDE
+  WEAK_SIDE
+  NEUTRAL
+}
+
+enum ChampionRole {
+  ENGAGE
+  PICKUP
+  PROTECT
+  SIEGE
+  SPLITPUSH
+}
+
+enum MasteryLevel {
+  MAIN
+  POCKET
+  LEARNING
+}
+
+enum MatchType {
+  SCRIM
+  SOLOQ
+  TOURNAMENT
+}
+
+enum MatchResult {
+  WIN
+  LOSS
+  REMAKE
+}
+
+enum Side {
+  BLUE
+  RED
+}
