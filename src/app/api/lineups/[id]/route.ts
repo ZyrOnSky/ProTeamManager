@@ -15,13 +15,14 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, scheduleLink } = body;
 
     const lineup = await prisma.lineup.update({
       where: { id },
       data: {
         name,
         description,
+        scheduleLink,
       },
       include: {
         players: {

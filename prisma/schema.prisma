@@ -35,6 +35,7 @@ model User {
   evaluationsGiven PlayerEvaluation[]
   playerProfile    PlayerProfile?
   assignedLineup   Lineup?            @relation("StaffLineup", fields: [assignedLineupId], references: [id])
+  eventAttendances EventAttendance[]
 }
 
 model ChangeLog {
@@ -71,11 +72,13 @@ model Lineup {
   name        String
   description String?
   isActive    Boolean         @default(true)
+  scheduleLink String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   matches     Match[]
   players     PlayerProfile[]
   staff       User[]          @relation("StaffLineup")
+  events      ScheduleEvent[]
 }
 
 model PlayerEvaluation {
@@ -215,14 +218,75 @@ model Composition {
   updatedAt    DateTime @updatedAt
 }
 
+enum EventType {
+  SCRIM
+  TOURNAMENT
+  TRAINING
+  ACTIVITY_LOG
+}
+
+enum ScrimType {
+  WARMUP
+  EVALUATION
+  SCRIM
+}
+
+enum EventModality {
+  BO1
+  BO2
+  BO3
+  BO5
+  TWO_MAPS
+  THREE_MAPS
+  FIVE_MAPS
+}
+
 model ScheduleEvent {
   id          String    @id @default(cuid())
   title       String
   description String?
   startTime   DateTime
   endTime     DateTime?
-  type        String
+  
+  type        EventType
+  
+  // Scrim/Tournament specific fields
+  opponentName    String?
+  opponentContact String?
+  scrimType       ScrimType?
+  modality        EventModality?
+  
+  // Training specific fields
+  activityType    String? // "Master Class", "VOD Review", etc.
+  
+  lineupId    String
+  lineup      Lineup    @relation(fields: [lineupId], references: [id])
+  
+  attendances EventAttendance[]
+  
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+  PENDING
+}
+
+model EventAttendance {
+  id        String           @id @default(cuid())
+  eventId   String
+  userId    String
+  status    AttendanceStatus @default(PENDING)
+  notes     String?
+  
+  event     ScheduleEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id])
+  
+  @@unique([eventId, userId])
 }
 
 enum Role {

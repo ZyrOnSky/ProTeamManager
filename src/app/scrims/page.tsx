@@ -26,6 +26,7 @@ export default async function ScrimsPage() {
         select: {
           kills: true,
           deaths: true,
+          assists: true,
           isEnemy: true,
         }
       }

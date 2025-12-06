@@ -26,6 +26,16 @@ export default async function PlayerDetailPage(props: { params: Promise<{ id: st
   const player = await prisma.user.findUnique({
     where: { id: params.id },
     include: {
+      eventAttendances: {
+        include: {
+          event: true
+        },
+        orderBy: {
+          event: {
+            startTime: 'desc'
+          }
+        }
+      },
       playerProfile: {
         include: {
           championPool: true,
@@ -60,6 +70,7 @@ export default async function PlayerDetailPage(props: { params: Promise<{ id: st
 
   const evaluations = profile?.evaluations || [];
   const matches = profile?.matchParticipations || [];
+  const attendances = player.eventAttendances || [];
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
@@ -107,6 +118,7 @@ export default async function PlayerDetailPage(props: { params: Promise<{ id: st
           championPool={championPool}
           evaluations={evaluations}
           matches={matches}
+          attendances={attendances}
           userRole={session.user.role}
           currentUserId={session.user.id}
         />

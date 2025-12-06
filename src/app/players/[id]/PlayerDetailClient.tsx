@@ -48,6 +48,7 @@ interface PlayerDetailClientProps {
   championPool: any[];
   evaluations: any[];
   matches: any[];
+  attendances: any[];
   userRole: string;
   currentUserId: string;
 }
@@ -58,6 +59,7 @@ export function PlayerDetailClient({
   championPool, 
   evaluations, 
   matches,
+  attendances,
   userRole,
   currentUserId
 }: PlayerDetailClientProps) {
@@ -217,6 +219,19 @@ export function PlayerDetailClient({
   const avgCSPerMin = totalMinutes > 0 ? (totalCSForMin / totalMinutes).toFixed(1) : "0.0";
   const avgWardsPerMin = totalMinutes > 0 ? (totalWardsForMin / totalMinutes).toFixed(2) : "0.00";
   
+  // --- Attendance Stats ---
+  const validAttendances = attendances.filter((a: any) => a.event.type !== "ACTIVITY_LOG");
+  const totalAttendanceEvents = validAttendances.length;
+  
+  const presentCount = validAttendances.filter((a: any) => a.status === "PRESENT").length;
+  const lateCount = validAttendances.filter((a: any) => a.status === "LATE").length;
+  const absentCount = validAttendances.filter((a: any) => a.status === "ABSENT").length;
+  const excusedCount = validAttendances.filter((a: any) => a.status === "EXCUSED").length;
+
+  const attendanceRate = totalAttendanceEvents > 0 
+    ? Math.round(((presentCount + lateCount) / totalAttendanceEvents) * 100) 
+    : 0;
+
   // --- FIFA Card Calculation ---
   const winRateScore = Math.min(10, (winRate / 70) * 10);
   
@@ -744,6 +759,46 @@ export function PlayerDetailClient({
                 ) : (
                   <div className="text-center py-8 text-slate-500">Sin evaluaciones aún.</div>
                 )}
+              </div>
+
+              {/* Attendance Summary */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-lg font-bold text-slate-200">Asistencia</h3>
+                  <div className={`text-2xl font-bold ${attendanceRate >= 80 ? 'text-green-400' : attendanceRate >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    {attendanceRate}%
+                  </div>
+                </div>
+
+                <div className="w-full bg-slate-950 rounded-full h-2 mb-6 overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${attendanceRate >= 80 ? 'bg-green-500' : attendanceRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                    style={{ width: `${attendanceRate}%` }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-950 p-3 rounded border border-slate-800 text-center">
+                    <div className="text-xl font-bold text-white">{presentCount}</div>
+                    <div className="text-xs text-slate-500 uppercase">Presente</div>
+                  </div>
+                  <div className="bg-slate-950 p-3 rounded border border-slate-800 text-center">
+                    <div className="text-xl font-bold text-yellow-400">{lateCount}</div>
+                    <div className="text-xs text-slate-500 uppercase">Atrasos</div>
+                  </div>
+                  <div className="bg-slate-950 p-3 rounded border border-slate-800 text-center">
+                    <div className="text-xl font-bold text-red-400">{absentCount}</div>
+                    <div className="text-xs text-slate-500 uppercase">Ausente</div>
+                  </div>
+                  <div className="bg-slate-950 p-3 rounded border border-slate-800 text-center">
+                    <div className="text-xl font-bold text-blue-400">{excusedCount}</div>
+                    <div className="text-xs text-slate-500 uppercase">Justificado</div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 text-center text-xs text-slate-600">
+                  Total Eventos: {totalAttendanceEvents}
+                </div>
               </div>
             </div>
           </div>

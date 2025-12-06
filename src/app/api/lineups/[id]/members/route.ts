@@ -3,6 +3,56 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+    const lineup = await prisma.lineup.findUnique({
+      where: { id },
+      include: {
+        players: {
+          include: { user: true },
+        },
+        staff: true,
+      },
+    });
+
+    if (!lineup) {
+      return new NextResponse("Lineup not found", { status: 404 });
+    }
+
+    // Normalize members list
+    const members = [
+      ...lineup.players.map((p) => ({
+        id: p.user.id,
+        name: p.user.name,
+        role: p.user.role,
+        status: p.user.status,
+        image: null, // Add image if available
+      })),
+      ...lineup.staff.map((s) => ({
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        status: s.status,
+        image: null,
+      })),
+    ];
+
+    return NextResponse.json(members);
+  } catch (error) {
+    console.error("Error fetching members:", error);
+    return new NextResponse("Error fetching members", { status: 500 });
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
