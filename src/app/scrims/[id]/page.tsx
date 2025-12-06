@@ -16,6 +16,7 @@ export default async function ScrimDetailPage(props: { params: Promise<{ id: str
     where: { id: params.id },
     include: {
       enemyTeam: true,
+      lineup: true,
       participants: {
         include: {
           playerProfile: {

@@ -54,6 +54,8 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
   const [blueBans, setBlueBans] = useState<string[]>(match.blueBans || ["", "", "", "", ""]);
   const [redBans, setRedBans] = useState<string[]>(match.redBans || ["", "", "", "", ""]);
   const [gameVersion, setGameVersion] = useState(match.gameVersion || "");
+  const [draftImageUrl, setDraftImageUrl] = useState(match.draftImageUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
   
   // Local State for Participants (Simplified for now)
   // We need to map existing participants to roles
@@ -134,6 +136,32 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
     keyMistakes: match.analysis?.keyMistakes || "",
   });
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    setIsUploading(true);
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!res.ok) throw new Error("Upload failed");
+      
+      const data = await res.json();
+      setDraftImageUrl(data.url);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Error al subir la imagen");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -147,6 +175,7 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
         vodLink,
         analysis,
         gameVersion,
+        draftImageUrl,
         playerStats
       };
 
@@ -230,7 +259,7 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-8">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-blue-400">NUESTRO EQUIPO</h2>
+              <h2 className="text-2xl font-bold text-blue-400">{match.lineup?.name || "NUESTRO EQUIPO"}</h2>
               <span className={`text-xs font-bold px-2 py-1 rounded ${isBlueSide ? 'bg-blue-500/20 text-blue-400' : 'bg-red-500/20 text-red-400'}`}>
                 {match.ourSide} SIDE
               </span>
@@ -316,12 +345,13 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
         
         {/* DRAFT TAB */}
         {activeTab === "DRAFT" && (
+          <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Our Team Draft */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <Shield className="text-blue-500" size={20} />
-                Nuestro Draft ({match.ourSide})
+                {match.lineup?.name || "Nuestro Draft"} ({match.ourSide})
               </h3>
               
               {/* Bans */}
@@ -433,6 +463,52 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
               </div>
             </div>
           </div>
+
+          {/* Draft Image Upload */}
+          <div className="mt-8 bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+            <h3 className="text-lg font-bold mb-4 text-slate-200">Captura del Draft</h3>
+            
+            {!draftImageUrl ? (
+              <div className="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
+                <input 
+                  type="file" 
+                  accept="image/png, image/jpeg" 
+                  className="hidden" 
+                  id="draft-upload"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                />
+                <label htmlFor="draft-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                  {isUploading ? (
+                    <Loader2 className="animate-spin text-blue-500" size={32} />
+                  ) : (
+                    <div className="p-4 bg-slate-800 rounded-full text-slate-400 mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    </div>
+                  )}
+                  <span className="text-slate-300 font-medium">
+                    {isUploading ? "Subiendo..." : "Click para subir captura (JPG/PNG)"}
+                  </span>
+                  <span className="text-xs text-slate-500">Máximo 5MB</span>
+                </label>
+              </div>
+            ) : (
+              <div className="relative group">
+                <img 
+                  src={draftImageUrl} 
+                  alt="Draft Screenshot" 
+                  className="w-full rounded-lg border border-slate-700 shadow-lg"
+                />
+                <button 
+                  onClick={() => setDraftImageUrl("")}
+                  className="absolute top-4 right-4 bg-red-600 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            )}
+          </div>
+          </>
         )}
 
         {/* STATS TAB */}

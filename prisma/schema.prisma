@@ -139,6 +139,7 @@ model Match {
   blueBans     String[]
   redBans      String[]
   gameVersion  String?
+  draftImageUrl String?
   lineupId     String?
   comments     Comment[]
   enemyTeam    Team?              @relation("EnemyTeam", fields: [enemyTeamId], references: [id])

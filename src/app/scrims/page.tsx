@@ -64,6 +64,7 @@ export default async function ScrimsPage() {
               <thead>
                 <tr className="bg-slate-950 text-slate-400 text-xs uppercase font-bold border-b border-slate-800">
                   <th className="p-4">Fecha</th>
+                  <th className="p-4">Equipo</th>
                   <th className="p-4">Rival</th>
                   <th className="p-4 text-center">Resultado</th>
                   <th className="p-4 text-center">KDA Equipo</th>
@@ -88,6 +89,9 @@ export default async function ScrimsPage() {
                           <span>{format(new Date(match.date), "dd MMM yyyy", { locale: es })}</span>
                           <span className="text-xs text-slate-500">{format(new Date(match.date), "HH:mm", { locale: es })}</span>
                         </div>
+                      </td>
+                      <td className="p-4 text-blue-400 font-medium">
+                        {match.lineup?.name || "Nuestro Equipo"}
                       </td>
                       <td className="p-4 text-slate-300">
                         {match.enemyTeam?.name || "Equipo Desconocido"}

@@ -104,6 +104,7 @@ export async function PUT(
       enemyPicks, 
       // ... existing destructuring
       gameVersion,
+      draftImageUrl,
       playerStats,
       analysis // Don't forget analysis
     } = body;
@@ -118,6 +119,7 @@ export async function PUT(
         duration: body.duration || null,
         vodLink: body.vodLink || null,
         gameVersion: gameVersion || null,
+        draftImageUrl: draftImageUrl || null,
       },
     });
 
