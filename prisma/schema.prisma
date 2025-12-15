@@ -36,6 +36,7 @@ model User {
   playerProfile    PlayerProfile?
   assignedLineup   Lineup?            @relation("StaffLineup", fields: [assignedLineupId], references: [id])
   eventAttendances EventAttendance[]
+  createdPlaybooks Playbook[]         @relation("PlaybookCreator")
 }
 
 model ChangeLog {
@@ -79,6 +80,10 @@ model Lineup {
   players     PlayerProfile[]
   staff       User[]          @relation("StaffLineup")
   events      ScheduleEvent[]
+  tierLists   TierList[]
+  draftPlans  DraftPlan[]
+  configurations LineupConfiguration[]
+  playbooks   Playbook[]
 }
 
 model PlayerEvaluation {
@@ -112,9 +117,35 @@ model Team {
   id             String  @id @default(cuid())
   name           String
   isRival        Boolean @default(false)
+  isVisible      Boolean @default(true)
   notes          String?
+  opggUrl        String?
   matchesAsEnemy Match[] @relation("EnemyTeam")
+  draftPlans     DraftPlan[]
+  players        EnemyPlayer[]
+  manualBans     EnemyBan[]
+  tierLists      TierList[]
 }
+
+model EnemyPlayer {
+  id        String   @id @default(cuid())
+  teamId    String
+  name      String   // Riot ID or Nickname
+  role      Position
+  opggUrl   String?
+  notes     String?
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model EnemyBan {
+  id           String   @id @default(cuid())
+  teamId       String
+  championName String
+  count        Int      @default(1)
+  notes        String?
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
 
 model Patch {
   id        String    @id @default(cuid())
@@ -309,6 +340,7 @@ enum LaneAllocation {
   STRONG_SIDE
   WEAK_SIDE
   NEUTRAL
+  ROAMING
 }
 
 enum ChampionRole {
@@ -329,6 +361,55 @@ enum MatchType {
   SCRIM
   SOLOQ
   TOURNAMENT
+  SCOUTING
+}
+
+model TierList {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean            @default(false)
+  lineupId    String?
+  enemyTeamId String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  champions   TierListChampion[]
+  lineup      Lineup?            @relation(fields: [lineupId], references: [id])
+  enemyTeam   Team?              @relation(fields: [enemyTeamId], references: [id])
+  draftPlansAsAlly  DraftPlan[] @relation("AllyTierList")
+  draftPlansAsEnemy DraftPlan[] @relation("EnemyTierList")
+}
+
+model TierListChampion {
+  id           String    @id @default(cuid())
+  tierListId   String
+  championName String
+  tier         String
+  role         Position?
+  notes        String?
+  tierList     TierList  @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+}
+
+model DraftPlan {
+  id          String   @id @default(cuid())
+  name        String
+  enemyTeamId String?
+  lineupId    String?
+  gameVersion String?
+  ourSide     Side     @default(BLUE)
+  blueBans    String[]
+  redBans     String[]
+  bluePicks   String[]
+  redPicks    String[]
+  notes       String?
+  allyTierListId  String?
+  enemyTierListId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  enemyTeam   Team?    @relation(fields: [enemyTeamId], references: [id])
+  lineup      Lineup?  @relation(fields: [lineupId], references: [id])
+  allyTierList    TierList? @relation("AllyTierList", fields: [allyTierListId], references: [id])
+  enemyTierList   TierList? @relation("EnemyTierList", fields: [enemyTierListId], references: [id])
 }
 
 enum MatchResult {
@@ -340,4 +421,50 @@ enum MatchResult {
 enum Side {
   BLUE
   RED
+}
+
+model LineupConfiguration {
+  id          String   @id @default(cuid())
+  name        String
+  lineupId    String?
+  assignments Json
+  filters     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lineup      Lineup?  @relation(fields: [lineupId], references: [id])
+}
+
+// --- STRATEGY MODULE ---
+
+model Playbook {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  lineupId    String?
+  creatorId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  lineup      Lineup?  @relation(fields: [lineupId], references: [id])
+  creator     User?    @relation("PlaybookCreator", fields: [creatorId], references: [id])
+  scenes      StrategyScene[]
+}
+
+model StrategyScene {
+  id          String   @id @default(cuid())
+  playbookId  String
+  title       String
+  description String?
+  imageUrl    String?
+  order       Int      @default(0)
+  
+  // Recursive relation for Scene Tree (Parent -> Children)
+  parentId    String?
+  parent      StrategyScene?  @relation("SceneTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    StrategyScene[] @relation("SceneTree")
+  
+  playbook    Playbook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
