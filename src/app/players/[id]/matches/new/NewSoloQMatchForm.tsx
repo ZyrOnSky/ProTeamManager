@@ -19,13 +19,22 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
 
   useEffect(() => {
     // Fetch Champions
-    fetch("https://ddragon.leagueoflegends.com/cdn/14.23.1/data/en_US/champion.json")
-      .then(res => res.json())
-      .then(data => {
-        const champList = Object.keys(data.data).sort();
+    const fetchChampions = async () => {
+      try {
+        const versionRes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
+        const versions = await versionRes.json();
+        const latestVersion = versions[0];
+        
+        const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/es_ES/champion.json`);
+        const data = await res.json();
+        const champList = Object.values(data.data).map((c: any) => c.name).sort();
         setChampions(champList);
-      })
-      .catch(err => console.error("Error fetching champions:", err));
+      } catch (error) {
+        console.error("Error fetching champions:", error);
+      }
+    };
+
+    fetchChampions();
 
     // Fetch Patches
     fetch("/api/patches")

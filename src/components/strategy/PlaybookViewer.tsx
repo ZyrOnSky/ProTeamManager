@@ -84,6 +84,7 @@ export function PlaybookViewer({ playbookId, initialScenes, playbookTitle, playb
     );
     const [isEditing, setIsEditing] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     
     // Playbook Edit State
     const [isEditingPlaybook, setIsEditingPlaybook] = useState(false);
@@ -198,6 +199,25 @@ export function PlaybookViewer({ playbookId, initialScenes, playbookTitle, playb
             alert('Upload failed');
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            handleImageUpload(files[0]);
         }
     };
 
@@ -348,7 +368,14 @@ export function PlaybookViewer({ playbookId, initialScenes, playbookTitle, playb
                                         />
                                     </div>
                                     
-                                    <div className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center hover:bg-slate-700/30 transition-colors relative">
+                                    <div 
+                                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors relative ${
+                                            isDragging ? 'border-blue-500 bg-blue-500/10' : 'border-slate-600 hover:bg-slate-700/30'
+                                        }`}
+                                        onDragOver={handleDragOver}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={handleDrop}
+                                    >
                                         <input 
                                             type="file" 
                                             accept="image/*"
@@ -360,8 +387,10 @@ export function PlaybookViewer({ playbookId, initialScenes, playbookTitle, playb
                                                 <span>Uploading...</span>
                                             ) : (
                                                 <>
-                                                    <Upload size={24} />
-                                                    <span className="text-sm font-medium">Click to upload or drag & drop</span>
+                                                    <Upload size={24} className={isDragging ? 'text-blue-500' : ''} />
+                                                    <span className="text-sm font-medium">
+                                                        {isDragging ? 'Drop image here' : 'Click to upload or drag & drop'}
+                                                    </span>
                                                     <span className="text-xs text-slate-500">You can also paste (Ctrl+V) an image anywhere on the screen</span>
                                                 </>
                                             )}

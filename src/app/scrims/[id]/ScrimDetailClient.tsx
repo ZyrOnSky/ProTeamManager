@@ -64,6 +64,7 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
   const [patchId, setPatchId] = useState(match.patchId || "");
   const [draftImageUrl, setDraftImageUrl] = useState(match.draftImageUrl || "");
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [patches, setPatches] = useState<any[]>([]);
 
   useEffect(() => {
@@ -161,11 +162,8 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
     keyMistakes: match.analysis?.keyMistakes || "",
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
+  const uploadFile = async (file: File) => {
     setIsUploading(true);
-    const file = e.target.files[0];
     const formData = new FormData();
     formData.append("file", file);
 
@@ -184,6 +182,40 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
       alert("Error al subir la imagen");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    uploadFile(e.target.files[0]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      uploadFile(files[0]);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) uploadFile(file);
+      }
     }
   };
 
@@ -246,7 +278,7 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
   const isBlueSide = match.ourSide === "BLUE";
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto" onPaste={handlePaste}>
       {/* Header */}
       <header className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -532,7 +564,14 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
             <h3 className="text-lg font-bold mb-4 text-slate-200">Captura del Draft</h3>
             
             {!draftImageUrl ? (
-              <div className="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
+              <div 
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                  isDragging ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-blue-500'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <input 
                   type="file" 
                   accept="image/png, image/jpeg" 
@@ -541,18 +580,20 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
                   onChange={handleImageUpload}
                   disabled={isUploading}
                 />
-                <label htmlFor="draft-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                <label htmlFor="draft-upload" className="cursor-pointer flex flex-col items-center gap-2 w-full h-full">
                   {isUploading ? (
                     <Loader2 className="animate-spin text-blue-500" size={32} />
                   ) : (
-                    <div className="p-4 bg-slate-800 rounded-full text-slate-400 mb-2">
+                    <div className={`p-4 bg-slate-800 rounded-full text-slate-400 mb-2 ${isDragging ? 'text-blue-500' : ''}`}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                     </div>
                   )}
                   <span className="text-slate-300 font-medium">
-                    {isUploading ? "Subiendo..." : "Click para subir captura (JPG/PNG)"}
+                    {isUploading ? "Subiendo..." : (isDragging ? "Suelta la imagen aquí" : "Click para subir captura (JPG/PNG)")}
                   </span>
-                  <span className="text-xs text-slate-500">Máximo 5MB</span>
+                  <span className="text-xs text-slate-500">
+                    {isDragging ? "..." : "Arrastra y suelta o pega (Ctrl+V) aquí. Máximo 5MB"}
+                  </span>
                 </label>
               </div>
             ) : (
