@@ -111,7 +111,7 @@ export function PlaybookViewer({ playbookId, initialScenes, playbookTitle, playb
         const result = await createScene({
             playbookId,
             title,
-            parentId,
+            parentId: parentId ?? undefined,
             description: 'Describe the play here...',
         });
 
