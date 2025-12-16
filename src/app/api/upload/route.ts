@@ -19,16 +19,14 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = Date.now() + "_" + file.name.replaceAll(" ", "_");
     
-    // Save to public/uploads
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    const filePath = path.join(uploadDir, filename);
-    
-    await writeFile(filePath, buffer);
+    // Convert to Base64 Data URI
+    const base64 = buffer.toString('base64');
+    const mimeType = file.type || 'image/png'; // Default to png if type is missing
+    const dataUri = `data:${mimeType};base64,${base64}`;
     
     return NextResponse.json({ 
-      url: `/uploads/${filename}`,
+      url: dataUri,
       success: true 
     });
   } catch (error) {

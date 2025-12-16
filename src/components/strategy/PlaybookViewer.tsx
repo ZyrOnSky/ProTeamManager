@@ -189,9 +189,20 @@ export function PlaybookViewer({ playbookId, initialScenes, playbookTitle, playb
             });
             const data = await res.json();
             if (data.url) {
-                const input = document.querySelector('input[name="imageUrl"]') as HTMLInputElement;
-                if (input) {
-                    input.value = data.url;
+                if (currentScene) {
+                    // Update local state
+                    const updatedScene = { ...currentScene, imageUrl: data.url };
+                    setScenes(prev => prev.map(s => s.id === currentScene.id ? updatedScene : s));
+
+                    if (!isEditing) {
+                        setIsEditing(true);
+                    } else {
+                        // If already editing, update the input manually as well
+                        const input = document.querySelector('input[name="imageUrl"]') as HTMLInputElement;
+                        if (input) {
+                            input.value = data.url;
+                        }
+                    }
                 }
             }
         } catch (e) {
