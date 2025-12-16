@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { LineupPlanner } from "./LineupPlanner";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LineupPlannerPage() {
   // Fetch all active players with their profiles and match stats
   const players = await prisma.user.findMany({
