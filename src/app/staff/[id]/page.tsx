@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Briefcase } from "lucide-react";
 import { StaffDetailClient } from "./StaffDetailClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function StaffDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions);

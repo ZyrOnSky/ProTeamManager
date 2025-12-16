@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { LineupManagementClient } from "./LineupManagementClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LineupsPage() {
   const session = await getServerSession(authOptions);
   

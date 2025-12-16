@@ -3,6 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   searchParams: Promise<{ enemyTeamId?: string }>;
 }

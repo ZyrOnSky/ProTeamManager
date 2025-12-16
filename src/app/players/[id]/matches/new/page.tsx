@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import NewSoloQMatchForm from "./NewSoloQMatchForm";
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewSoloQMatchPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions);

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Plus } from "lucide-react";
 import { ScrimsListClient } from "./ScrimsListClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ScrimsPage() {
   const session = await getServerSession(authOptions);
   

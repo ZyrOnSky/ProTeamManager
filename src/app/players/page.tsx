@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Network } from "lucide-react";
 import { RosterManagementClient } from "./RosterManagementClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PlayersPage() {
   const session = await getServerSession(authOptions);
   
