@@ -197,43 +197,6 @@ export default function SettingsPage() {
 
           <hr className="border-slate-800" />
 
-          {/* Idioma */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 text-green-400 mb-2">
-              <Globe size={24} />
-              <h2 className="text-xl font-semibold text-white">Idioma del Sistema</h2>
-            </div>
-            <p className="text-sm text-slate-400">
-              Selecciona el idioma de la interfaz (actualmente en desarrollo).
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setSettings({ ...settings, language: "es" })}
-                className={`p-4 rounded-lg border transition-all text-center ${
-                  settings.language === "es"
-                    ? "bg-green-500/20 border-green-500 text-green-400"
-                    : "bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700"
-                }`}
-              >
-                Español
-              </button>
-              <button
-                type="button"
-                onClick={() => setSettings({ ...settings, language: "en" })}
-                className={`p-4 rounded-lg border transition-all text-center ${
-                  settings.language === "en"
-                    ? "bg-blue-500/20 border-blue-500 text-blue-400"
-                    : "bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700"
-                }`}
-              >
-                English
-              </button>
-            </div>
-          </div>
-
-          <hr className="border-slate-800" />
-
           {/* Seguridad */}
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-red-400 mb-2">

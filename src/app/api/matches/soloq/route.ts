@@ -64,6 +64,7 @@ export async function POST(req: Request) {
         duration: duration ? parseInt(duration) * 60 : null, // minutes to seconds
         result,
         gameVersion,
+        patchId: body.patchId || null,
         participants: {
             create: {
                 playerProfileId,

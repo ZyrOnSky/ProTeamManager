@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Shield, Sword, Crosshair, Heart, Zap, Users, UserCog, Briefcase } from "lucide-react";
+import { Shield, Sword, Crosshair, Heart, Zap, Users, UserCog, Briefcase, Crown } from "lucide-react";
 import { AddMemberForm } from "./AddMemberForm";
 import { UserStatusManager } from "@/components/UserStatusManager";
+import { toggleCaptain } from "./actions";
 
 // Mapa de iconos por rol de juego
 const RoleIcons: Record<string, any> = {
@@ -140,6 +141,7 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
             const Icon = RoleIcons[position] || Shield;
             const lineupName = lineups.find(l => l.id === player.playerProfile?.lineupId)?.name;
             const stats = calculatePlayerStats(player);
+            const isCaptain = player.playerProfile?.isCaptain;
 
             // Determine score color
             let scoreColor = "text-slate-400";
@@ -191,7 +193,23 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-bold mb-1 text-white">{player.name}</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-xl font-bold text-white">{player.name}</h3>
+                  {isCaptain && <Crown size={18} className="text-yellow-500 fill-yellow-500" />}
+                  
+                  {canManage && (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await toggleCaptain(player.id, player.playerProfile?.lineupId, !isCaptain);
+                      }}
+                      className={`p-1 rounded hover:bg-slate-800 transition-colors ${isCaptain ? 'text-yellow-500/50 hover:text-yellow-500' : 'text-slate-700 hover:text-yellow-500'}`}
+                      title={isCaptain ? "Quitar Capitanía" : "Nombrar Capitán"}
+                    >
+                      <Crown size={14} />
+                    </button>
+                  )}
+                </div>
                 <p className="text-slate-400 text-sm mb-4">{player.email}</p>
                 
                 <div className="flex gap-2 mt-4">

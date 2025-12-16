@@ -27,8 +27,10 @@ export default function EditSoloQMatchForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [champions, setChampions] = useState<string[]>([]);
+  const [patches, setPatches] = useState<any[]>([]);
 
   useEffect(() => {
+    // Fetch Champions
     fetch("https://ddragon.leagueoflegends.com/cdn/14.23.1/data/en_US/champion.json")
       .then(res => res.json())
       .then(data => {
@@ -36,13 +38,29 @@ export default function EditSoloQMatchForm({
         setChampions(champList);
       })
       .catch(err => console.error("Error fetching champions:", err));
-  }, []);
+
+    // Fetch Patches
+    fetch("/api/patches")
+      .then(res => res.json())
+      .then(data => {
+        setPatches(data);
+        // Auto-link existing string version to patch ID if missing
+        if (!match.patchId && match.gameVersion) {
+          const found = data.find((p: any) => p.version === match.gameVersion);
+          if (found) {
+            setFormData(prev => ({ ...prev, patchId: found.id }));
+          }
+        }
+      })
+      .catch(err => console.error("Error fetching patches:", err));
+  }, [match.patchId, match.gameVersion]);
 
   const [formData, setFormData] = useState({
     date: new Date(match.date).toISOString().slice(0, 16),
     duration: match.duration ? Math.floor(match.duration / 60).toString() : "",
     result: match.result || "WIN",
     gameVersion: match.gameVersion || "",
+    patchId: match.patchId || "",
     championName: participant.championName,
     position: participant.position,
     championRole: participant.championRole || "ENGAGE",
@@ -199,14 +217,26 @@ export default function EditSoloQMatchForm({
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Parche</label>
-                <input
-                  type="text"
-                  name="gameVersion"
-                  placeholder="Ej. 15.15"
-                  value={formData.gameVersion}
-                  onChange={handleChange}
+                <select
+                  name="patchId"
+                  value={formData.patchId}
+                  onChange={(e) => {
+                    const selectedPatch = patches.find(p => p.id === e.target.value);
+                    setFormData(prev => ({
+                      ...prev,
+                      patchId: e.target.value,
+                      gameVersion: selectedPatch ? selectedPatch.version : prev.gameVersion
+                    }));
+                  }}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 focus:border-blue-500 outline-none"
-                />
+                >
+                  <option value="">Seleccionar Parche</option>
+                  {patches.map(patch => (
+                    <option key={patch.id} value={patch.id}>
+                      {patch.version}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Campeón</label>

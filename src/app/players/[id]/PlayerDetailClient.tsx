@@ -21,7 +21,10 @@ import {
   Trash2,
   Plus,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Filter
 } from "lucide-react";
 import { ChampionPoolManager } from "./ChampionPoolManager";
 import {
@@ -79,6 +82,36 @@ export function PlayerDetailClient({
     role: player.role, // Keep role to pass validation
     position: profile?.position || "FILL",
   });
+
+  // Pagination & Filter State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [filterSide, setFilterSide] = useState<"ALL" | "BLUE" | "RED">("ALL");
+  const [filterResult, setFilterResult] = useState<"ALL" | "WIN" | "LOSS">("ALL");
+  const [sortOrder, setSortOrder] = useState<"DESC" | "ASC">("DESC");
+
+  // Filter Matches Logic
+  const filteredMatches = matches
+    .filter((m: any) => {
+      if (filterSide !== "ALL") {
+        if (m.match.ourSide !== filterSide) return false;
+      }
+      if (filterResult !== "ALL") {
+        if (m.match.result !== filterResult) return false;
+      }
+      return true;
+    })
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.match.date).getTime();
+      const dateB = new Date(b.match.date).getTime();
+      return sortOrder === "DESC" ? dateB - dateA : dateA - dateB;
+    });
+
+  const totalPages = Math.ceil(filteredMatches.length / itemsPerPage);
+  const currentMatches = filteredMatches.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Evaluation State
   const [evaluationsList, setEvaluationsList] = useState(evaluations);
@@ -997,26 +1030,70 @@ export function PlayerDetailClient({
         {/* Matches Tab */}
         {activeTab === "MATCHES" && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-white">Historial de Partidas</h3>
-              {(canEdit || player.id === currentUserId) && (
-                <button
-                  onClick={() => router.push(`/players/${player.id}/matches/new`)}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-white">Historial de Partidas</h3>
+                {(canEdit || player.id === currentUserId) && (
+                  <button
+                    onClick={() => router.push(`/players/${player.id}/matches/new`)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    <Swords size={18} />
+                    Registrar Partida SoloQ
+                  </button>
+                )}
+              </div>
+
+              {/* Filters Toolbar */}
+              <div className="flex flex-wrap items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Filter size={16} className="text-slate-400" />
+                  <span className="text-sm font-medium text-slate-300">Filtros:</span>
+                </div>
+                
+                <select 
+                  value={filterResult}
+                  onChange={(e) => {
+                    setFilterResult(e.target.value as any);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
                 >
-                  <Swords size={18} />
-                  Registrar Partida SoloQ
+                  <option value="ALL">Todos los Resultados</option>
+                  <option value="WIN">Victorias</option>
+                  <option value="LOSS">Derrotas</option>
+                </select>
+
+                <select 
+                  value={filterSide}
+                  onChange={(e) => {
+                    setFilterSide(e.target.value as any);
+                    setCurrentPage(1);
+                  }}
+                  className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                >
+                  <option value="ALL">Todos los Lados</option>
+                  <option value="BLUE">Lado Azul</option>
+                  <option value="RED">Lado Rojo</option>
+                </select>
+
+                <button
+                  onClick={() => setSortOrder(prev => prev === "DESC" ? "ASC" : "DESC")}
+                  className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-slate-200 transition-colors"
+                >
+                  {sortOrder === "DESC" ? <TrendingDown size={16} /> : <TrendingUp size={16} />}
+                  {sortOrder === "DESC" ? "Más Recientes" : "Más Antiguas"}
                 </button>
-              )}
+              </div>
             </div>
 
-            {matches.length === 0 ? (
+            {filteredMatches.length === 0 ? (
               <div className="text-center py-12 text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
-                No hay partidas registradas aún.
+                No hay partidas que coincidan con los filtros.
               </div>
             ) : (
               <div className="grid gap-4">
-                {matches.map((m: any) => {
+                {currentMatches.map((m: any) => {
                   const result = m.match.result;
                   const isWin = result === 'WIN';
                   const resultColor = isWin ? 'border-green-500/50 bg-green-500/5' : result === 'LOSS' ? 'border-red-500/50 bg-red-500/5' : 'border-slate-800 bg-slate-900';
@@ -1072,6 +1149,29 @@ export function PlayerDetailClient({
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-6">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <span className="text-sm text-slate-400">
+                  Página <span className="text-white font-medium">{currentPage}</span> de <span className="text-white font-medium">{totalPages}</span>
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={20} />
+                </button>
               </div>
             )}
           </div>

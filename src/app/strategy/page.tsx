@@ -1,41 +1,41 @@
-import Link from 'next/link';
-import { ArrowLeft, Map } from 'lucide-react';
-import { UserMenu } from '@/components/UserMenu';
+import { getAllLineups, getPlaybooks } from '@/app/actions/strategy';
+import { StrategyDashboardHeader } from '@/components/strategy/StrategyDashboardHeader';
+import { PlaybookCard } from '@/components/strategy/PlaybookCard';
+import { Book } from 'lucide-react';
 
-export default function StrategyPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function StrategyPage() {
+  const [lineupsResult, playbooksResult] = await Promise.all([
+    getAllLineups(),
+    getPlaybooks(),
+  ]);
+
+  const lineups = lineupsResult.success ? lineupsResult.data : [];
+  const playbooks = playbooksResult.success ? playbooksResult.data : [];
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <header className="mb-8 flex justify-between items-start max-w-6xl mx-auto">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/" 
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
-          >
-            <ArrowLeft size={24} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-purple-500 flex items-center gap-3">
-              <Map className="w-8 h-8" />
-              Pizarra Táctica
-            </h1>
-            <p className="text-slate-400">Diseña jugadas, rotaciones y planifica composiciones</p>
-          </div>
-        </div>
-        <UserMenu />
-      </header>
+    <div className="min-h-screen bg-slate-950 text-white p-8">
+      <StrategyDashboardHeader lineups={lineups || []} />
 
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-12 text-center">
-          <div className="w-20 h-20 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-purple-500">
-            <Map size={40} />
+      {/* Playbooks Grid */}
+      {playbooks && playbooks.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {playbooks.map((playbook: any) => (
+            <PlaybookCard key={playbook.id} playbook={playbook} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20 bg-slate-900/30 rounded-xl border border-dashed border-slate-800">
+          <div className="inline-flex p-4 rounded-full bg-slate-800/50 mb-4 text-slate-500">
+            <Book size={32} />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Módulo en Desarrollo</h2>
-          <p className="text-slate-400 max-w-md mx-auto">
-            Estamos construyendo las herramientas para diseñar tus estrategias. 
-            Pronto podrás crear pizarras interactivas y planificar tus partidas.
+          <h3 className="text-xl font-bold text-slate-300 mb-2">No Playbooks Yet</h3>
+          <p className="text-slate-500 max-w-md mx-auto">
+            Create your first playbook to start documenting your team's strategies and macro plays.
           </p>
         </div>
-      </div>
-    </main>
+      )}
+    </div>
   );
 }

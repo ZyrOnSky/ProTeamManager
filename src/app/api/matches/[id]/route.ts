@@ -49,6 +49,7 @@ export async function PUT(
           duration: duration ? parseInt(duration) * 60 : null,
           result,
           gameVersion,
+          patchId: body.patchId || null,
         }
       });
 
@@ -119,6 +120,7 @@ export async function PUT(
         duration: body.duration || null,
         vodLink: body.vodLink || null,
         gameVersion: gameVersion || null,
+        patchId: body.patchId || null,
         draftImageUrl: draftImageUrl || null,
       },
     });

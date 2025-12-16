@@ -1,41 +1,75 @@
 import Link from 'next/link';
-import { ArrowLeft, BarChart3 } from 'lucide-react';
-import { UserMenu } from '@/components/UserMenu';
+import { Search, BarChart3, List, Swords, Map, Layers } from 'lucide-react';
 
 export default function AnalysisPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <header className="mb-8 flex justify-between items-start max-w-6xl mx-auto">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/" 
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
-          >
-            <ArrowLeft size={24} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-red-500 flex items-center gap-3">
-              <BarChart3 className="w-8 h-8" />
-              Data & Scouting
-            </h1>
-            <p className="text-slate-400">Base de datos de rivales y estadísticas globales</p>
-          </div>
-        </div>
-        <UserMenu />
-      </header>
-
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-12 text-center">
-          <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
-            <BarChart3 size={40} />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Módulo en Desarrollo</h2>
-          <p className="text-slate-400 max-w-md mx-auto">
-            Estamos recopilando los datos. 
-            Pronto tendrás acceso a estadísticas avanzadas y herramientas de scouting.
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Centro de Datos y Scouting</h1>
+        <p className="text-slate-400">Herramientas avanzadas para el análisis de rivales y planificación estratégica.</p>
       </div>
-    </main>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Link href="/analysis/scouting" className="group block p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-blue-500 transition-all">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-blue-500/10 rounded-lg text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+              <Search size={24} />
+            </div>
+            <h2 className="text-xl font-semibold">Enemy Dashboard</h2>
+          </div>
+          <p className="text-slate-400 text-sm">Base de datos de rivales, historial de enfrentamientos y análisis de drafts enemigos.</p>
+        </Link>
+
+        <Link href="/analysis/stats" className="group block p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-green-500 transition-all">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-green-500/10 rounded-lg text-green-500 group-hover:bg-green-500 group-hover:text-white transition-colors">
+              <BarChart3 size={24} />
+            </div>
+            <h2 className="text-xl font-semibold">Global Stats</h2>
+          </div>
+          <p className="text-slate-400 text-sm">Estadísticas centralizadas de tu equipo. Winrates, KDA y métricas de rendimiento.</p>
+        </Link>
+
+        <Link href="/analysis/meta" className="group block p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-purple-500 transition-all">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-purple-500/10 rounded-lg text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <List size={24} />
+            </div>
+            <h2 className="text-xl font-semibold">Meta & Tier Lists</h2>
+          </div>
+          <p className="text-slate-400 text-sm">Gestiona Tier Lists internas, bans obligatorios y prioridades del meta actual.</p>
+        </Link>
+
+        <Link href="/analysis/patches" className="group block p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-pink-500 transition-all">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-pink-500/10 rounded-lg text-pink-500 group-hover:bg-pink-500 group-hover:text-white transition-colors">
+              <Layers size={24} />
+            </div>
+            <h2 className="text-xl font-semibold">Gestor de Parches</h2>
+          </div>
+          <p className="text-slate-400 text-sm">Administra versiones del juego, notas del parche y estadísticas por versión.</p>
+        </Link>
+
+        <Link href="/analysis/draft" className="group block p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-orange-500 transition-all">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-orange-500/10 rounded-lg text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+              <Swords size={24} />
+            </div>
+            <h2 className="text-xl font-semibold">Draft Planner</h2>
+          </div>
+          <p className="text-slate-400 text-sm">Simulador de drafts con integración de estadísticas y planificación de escenarios.</p>
+        </Link>
+
+        <Link href="/analysis/lineup" className="group block p-6 bg-slate-900 rounded-xl border border-slate-800 hover:border-red-500 transition-all">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-red-500/10 rounded-lg text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
+              <Map size={24} />
+            </div>
+            <h2 className="text-xl font-semibold">Lineup Planner</h2>
+          </div>
+          <p className="text-slate-400 text-sm">Visualización de mapa y cálculo de valor de jugadores por rol.</p>
+        </Link>
+      </div>
+    </div>
   );
 }

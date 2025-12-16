@@ -9,11 +9,12 @@ interface EventFormProps {
   event?: any;
   selectedDate?: Date | null;
   lineupId: string;
+  userTimezone?: string;
   onClose: () => void;
   onSave: () => void;
 }
 
-export default function EventForm({ event, selectedDate, lineupId, onClose, onSave }: EventFormProps) {
+export default function EventForm({ event, selectedDate, lineupId, userTimezone = "GMT-5", onClose, onSave }: EventFormProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -28,13 +29,40 @@ export default function EventForm({ event, selectedDate, lineupId, onClose, onSa
   });
   const [loading, setLoading] = useState(false);
 
+  const TIMEZONE_OFFSETS: Record<string, number> = {
+    "GMT-5": -5,
+    "GMT-6": -6,
+    "GMT-4": -4,
+    "GMT-3": -3,
+    "GMT+1": 1,
+    "UTC": 0,
+  };
+
+  const getShiftedDate = (date: Date) => {
+    const targetOffset = TIMEZONE_OFFSETS[userTimezone] ?? -5;
+    const localOffset = -date.getTimezoneOffset() / 60; 
+    const diff = targetOffset - localOffset;
+    return new Date(date.getTime() + diff * 60 * 60 * 1000);
+  };
+
+  const getReverseShiftedISO = (dateStr: string) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const targetOffset = TIMEZONE_OFFSETS[userTimezone] ?? -5;
+    const localOffset = -date.getTimezoneOffset() / 60;
+    const diff = targetOffset - localOffset;
+    // Reverse the shift to get back to absolute time
+    const originalDate = new Date(date.getTime() - diff * 60 * 60 * 1000);
+    return originalDate.toISOString();
+  };
+
   useEffect(() => {
     if (event) {
       setFormData({
         title: event.title,
         description: event.description || "",
-        startTime: format(new Date(event.startTime), "yyyy-MM-dd'T'HH:mm"),
-        endTime: event.endTime ? format(new Date(event.endTime), "yyyy-MM-dd'T'HH:mm") : "",
+        startTime: format(getShiftedDate(new Date(event.startTime)), "yyyy-MM-dd'T'HH:mm"),
+        endTime: event.endTime ? format(getShiftedDate(new Date(event.endTime)), "yyyy-MM-dd'T'HH:mm") : "",
         type: event.type,
         opponentName: event.opponentName || "",
         opponentContact: event.opponentContact || "",
@@ -43,15 +71,27 @@ export default function EventForm({ event, selectedDate, lineupId, onClose, onSa
         activityType: event.activityType || "VOD Review",
       });
     } else if (selectedDate) {
-      // Set default start time to selected date at current hour or 09:00
+      // selectedDate comes from the calendar click. 
+      // If the calendar is already showing shifted dates, selectedDate might be the "visual" date?
+      // In ScheduleClient: handleDateClick(cloneDay). cloneDay is derived from iterating days.
+      // The iteration logic in ScheduleClient uses startOfMonth(currentDate). 
+      // currentDate is just a JS Date.
+      // The calendar grid renders days. 
+      // When we click a day, we get that day at 00:00 local time usually.
+      // If I click "Dec 16", I get Dec 16 00:00 Local.
+      // If I want to set the default time to 19:00 "User Time", I just set the string to "2025-12-16T19:00".
+      // Since the input is "datetime-local", it will show 19:00.
+      // And when we save, getReverseShiftedISO will treat that "19:00" as "User Time 19:00" and shift it back to UTC.
+      // So this logic holds.
+      
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       setFormData(prev => ({
         ...prev,
-        startTime: `${dateStr}T19:00`, // Default to 7 PM
+        startTime: `${dateStr}T19:00`, // Default to 7 PM User Time
         endTime: `${dateStr}T21:00`,
       }));
     }
-  }, [event, selectedDate]);
+  }, [event, selectedDate, userTimezone]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,13 +101,18 @@ export default function EventForm({ event, selectedDate, lineupId, onClose, onSa
       const url = event ? `/api/schedule/events/${event.id}` : "/api/schedule/events";
       const method = event ? "PUT" : "POST";
 
+      // Convert form times (User Time) back to UTC/ISO
+      const payload = {
+        ...formData,
+        startTime: getReverseShiftedISO(formData.startTime),
+        endTime: formData.endTime ? getReverseShiftedISO(formData.endTime) : null,
+        lineupId,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          lineupId,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Failed to save event");

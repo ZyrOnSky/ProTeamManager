@@ -15,8 +15,10 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [champions, setChampions] = useState<string[]>([]);
+  const [patches, setPatches] = useState<any[]>([]);
 
   useEffect(() => {
+    // Fetch Champions
     fetch("https://ddragon.leagueoflegends.com/cdn/14.23.1/data/en_US/champion.json")
       .then(res => res.json())
       .then(data => {
@@ -24,6 +26,12 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
         setChampions(champList);
       })
       .catch(err => console.error("Error fetching champions:", err));
+
+    // Fetch Patches
+    fetch("/api/patches")
+      .then(res => res.json())
+      .then(data => setPatches(data))
+      .catch(err => console.error("Error fetching patches:", err));
   }, []);
 
   const [formData, setFormData] = useState({
@@ -31,6 +39,7 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
     duration: "",
     result: "WIN",
     gameVersion: "",
+    patchId: "",
     championName: "",
     position: "MID",
     championRole: "ENGAGE",
@@ -152,14 +161,26 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Parche</label>
-                <input
-                  type="text"
-                  name="gameVersion"
-                  placeholder="Ej. 15.15"
-                  value={formData.gameVersion}
-                  onChange={handleChange}
+                <select
+                  name="patchId"
+                  value={formData.patchId}
+                  onChange={(e) => {
+                    const selectedPatch = patches.find(p => p.id === e.target.value);
+                    setFormData(prev => ({
+                      ...prev,
+                      patchId: e.target.value,
+                      gameVersion: selectedPatch ? selectedPatch.version : prev.gameVersion
+                    }));
+                  }}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 focus:border-blue-500 outline-none"
-                />
+                >
+                  <option value="">Seleccionar Parche</option>
+                  {patches.map(patch => (
+                    <option key={patch.id} value={patch.id}>
+                      {patch.version}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Campeón</label>

@@ -20,7 +20,12 @@ export default function SetupPage() {
         setStatus('¡Éxito! Redirigiendo al login...');
         setTimeout(() => router.push('/login'), 2000);
       } else {
-        setStatus(`Error: ${data.message}`);
+        if (data.message === 'Admin already exists') {
+           setStatus('El administrador ya existe. Redirigiendo al login...');
+           setTimeout(() => router.push('/login'), 2000);
+        } else {
+           setStatus(`Error: ${data.message}`);
+        }
       }
     } catch (error) {
       setStatus('Error de conexión');

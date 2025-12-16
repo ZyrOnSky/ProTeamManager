@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Network } from "lucide-react";
 import { RosterManagementClient } from "./RosterManagementClient";
 
 export default async function PlayersPage() {
@@ -66,6 +66,14 @@ export default async function PlayersPage() {
               <p className="text-slate-400">Gestiona tu equipo, jugadores y personal técnico</p>
             </div>
           </div>
+          
+          <Link 
+            href="/hierarchy"
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors border border-slate-700"
+          >
+            <Network size={20} className="text-blue-400" />
+            Ver Jerarquía
+          </Link>
         </header>
 
         <RosterManagementClient 

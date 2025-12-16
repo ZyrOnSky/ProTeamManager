@@ -64,6 +64,32 @@ export async function deleteEnemyBan(banId: string) {
   }
 }
 
+export async function addEnemyPick(teamId: string, data: { championName: string; count: number; notes?: string }) {
+  await prisma.enemyPick.create({
+    data: {
+      teamId,
+      ...data
+    }
+  });
+  revalidatePath(`/analysis/scouting/${teamId}`);
+}
+
+export async function updateEnemyPick(pickId: string, data: { count?: number; notes?: string }) {
+  const pick = await prisma.enemyPick.update({
+    where: { id: pickId },
+    data
+  });
+  revalidatePath(`/analysis/scouting/${pick.teamId}`);
+}
+
+export async function deleteEnemyPick(pickId: string) {
+  const pick = await prisma.enemyPick.findUnique({ where: { id: pickId } });
+  if (pick) {
+    await prisma.enemyPick.delete({ where: { id: pickId } });
+    revalidatePath(`/analysis/scouting/${pick.teamId}`);
+  }
+}
+
 // Helper to get teamId for revalidation if needed, though usually we have it in context
 async function teamIdByPlayerId(playerId: string) {
   const player = await prisma.enemyPlayer.findUnique({ where: { id: playerId }, select: { teamId: true } });

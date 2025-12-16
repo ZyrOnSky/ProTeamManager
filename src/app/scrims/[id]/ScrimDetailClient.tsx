@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords, Shield, Sword, Zap, Crosshair, Heart, Save, Loader2, AlertCircle, Trash2, BarChart2 } from "lucide-react";
@@ -50,12 +50,37 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshLogs, setRefreshLogs] = useState(0);
 
+  // Helper to ensure 5 bans
+  const ensureFive = (arr: string[] | null) => {
+    const newArr = arr && Array.isArray(arr) ? [...arr] : [];
+    while (newArr.length < 5) newArr.push("");
+    return newArr.slice(0, 5);
+  };
+
   // Local State for Draft
-  const [blueBans, setBlueBans] = useState<string[]>(match.blueBans || ["", "", "", "", ""]);
-  const [redBans, setRedBans] = useState<string[]>(match.redBans || ["", "", "", "", ""]);
+  const [blueBans, setBlueBans] = useState<string[]>(ensureFive(match.blueBans));
+  const [redBans, setRedBans] = useState<string[]>(ensureFive(match.redBans));
   const [gameVersion, setGameVersion] = useState(match.gameVersion || "");
+  const [patchId, setPatchId] = useState(match.patchId || "");
   const [draftImageUrl, setDraftImageUrl] = useState(match.draftImageUrl || "");
   const [isUploading, setIsUploading] = useState(false);
+  const [patches, setPatches] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/patches")
+      .then(res => res.json())
+      .then(data => {
+        setPatches(data);
+        // Auto-link existing string version to patch ID if missing
+        if (!match.patchId && match.gameVersion) {
+          const found = data.find((p: any) => p.version === match.gameVersion);
+          if (found) {
+            setPatchId(found.id);
+          }
+        }
+      })
+      .catch(err => console.error("Error fetching patches:", err));
+  }, [match.patchId, match.gameVersion]);
   
   // Local State for Participants (Simplified for now)
   // We need to map existing participants to roles
@@ -173,9 +198,10 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
         result,
         duration: duration ? parseInt(duration) * 60 : null,
         vodLink,
-        analysis,
         gameVersion,
+        patchId,
         draftImageUrl,
+        analysis,
         playerStats
       };
 
@@ -278,13 +304,20 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
               {format(new Date(match.date), "PPP p", { locale: es })}
             </div>
             <div className="flex items-center justify-end gap-2">
-              <input 
-                type="text" 
-                placeholder="Patch (e.g. 14.2)" 
-                className="w-24 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-sm focus:border-blue-500 outline-none text-center"
-                value={gameVersion}
-                onChange={(e) => setGameVersion(e.target.value)}
-              />
+              <select 
+                className="w-32 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-sm focus:border-blue-500 outline-none"
+                value={patchId}
+                onChange={(e) => {
+                  const selectedPatch = patches.find(p => p.id === e.target.value);
+                  setPatchId(e.target.value);
+                  if (selectedPatch) setGameVersion(selectedPatch.version);
+                }}
+              >
+                <option value="">- Parche -</option>
+                {patches.map(patch => (
+                  <option key={patch.id} value={patch.id}>{patch.version}</option>
+                ))}
+              </select>
               <select 
                 className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-sm focus:border-blue-500 outline-none"
                 value={result}
@@ -354,26 +387,6 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
                 {match.lineup?.name || "Nuestro Draft"} ({match.ourSide})
               </h3>
               
-              {/* Bans */}
-              <div className="mb-6">
-                <label className="text-xs text-slate-500 uppercase font-bold mb-2 block">Bans</label>
-                <div className="flex gap-2">
-                  {(isBlueSide ? blueBans : redBans).map((ban, idx) => (
-                    <ChampionSelect
-                      key={`our-ban-${idx}`}
-                      placeholder={`Ban ${idx + 1}`}
-                      className="w-full"
-                      value={isBlueSide ? blueBans[idx] : redBans[idx]}
-                      onChange={(val) => {
-                        const newBans = [...(isBlueSide ? blueBans : redBans)];
-                        newBans[idx] = val;
-                        isBlueSide ? setBlueBans(newBans) : setRedBans(newBans);
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-
               {/* Picks */}
               <div className="space-y-3">
                 {ROLES.map((role) => {
@@ -420,26 +433,6 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
                 Draft Rival ({!isBlueSide ? 'BLUE' : 'RED'})
               </h3>
 
-              {/* Bans */}
-              <div className="mb-6">
-                <label className="text-xs text-slate-500 uppercase font-bold mb-2 block">Bans</label>
-                <div className="flex gap-2">
-                  {(!isBlueSide ? blueBans : redBans).map((ban, idx) => (
-                    <ChampionSelect
-                      key={`enemy-ban-${idx}`}
-                      placeholder={`Ban ${idx + 1}`}
-                      className="w-full"
-                      value={!isBlueSide ? blueBans[idx] : redBans[idx]}
-                      onChange={(val) => {
-                        const newBans = [...(!isBlueSide ? blueBans : redBans)];
-                        newBans[idx] = val;
-                        !isBlueSide ? setBlueBans(newBans) : setRedBans(newBans);
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-
               {/* Picks */}
               <div className="space-y-3">
                 {ROLES.map((role) => {
@@ -460,6 +453,76 @@ export function ScrimDetailClient({ match, roster, userRole }: ScrimDetailClient
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </div>
+
+          {/* Global Bans Section */}
+          <div className="mt-8 bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+            <h3 className="text-lg font-bold mb-6 text-slate-200 flex items-center gap-2">
+              <AlertCircle size={20} className="text-slate-400" />
+              Fase de Bloqueos (Bans)
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-12">
+              {/* Left Column: OUR BANS */}
+              <div>
+                <div className={`text-center mb-4 font-bold border-b pb-2 ${isBlueSide ? 'text-blue-400 border-blue-500/30' : 'text-red-400 border-red-500/30'}`}>
+                  NUESTROS BANS ({isBlueSide ? 'BLUE' : 'RED'})
+                </div>
+                <div className="space-y-2">
+                  {(isBlueSide ? blueBans : redBans).map((ban, idx) => (
+                    <div key={`our-ban-${idx}`} className="flex items-center gap-4">
+                      <span className="text-slate-500 font-mono w-6 text-right font-bold">{idx + 1}</span>
+                      <ChampionSelect
+                        placeholder={`Ban ${idx + 1}`}
+                        className="w-full"
+                        value={ban}
+                        onChange={(val) => {
+                          if (isBlueSide) {
+                            const newBans = [...blueBans];
+                            newBans[idx] = val;
+                            setBlueBans(newBans);
+                          } else {
+                            const newBans = [...redBans];
+                            newBans[idx] = val;
+                            setRedBans(newBans);
+                          }
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: ENEMY BANS */}
+              <div>
+                <div className={`text-center mb-4 font-bold border-b pb-2 ${!isBlueSide ? 'text-blue-400 border-blue-500/30' : 'text-red-400 border-red-500/30'}`}>
+                  BANS RIVALES ({!isBlueSide ? 'BLUE' : 'RED'})
+                </div>
+                <div className="space-y-2">
+                  {(!isBlueSide ? blueBans : redBans).map((ban, idx) => (
+                    <div key={`enemy-ban-${idx}`} className="flex items-center gap-4">
+                      <span className="text-slate-500 font-mono w-6 text-right font-bold">{idx + 1}</span>
+                      <ChampionSelect
+                        placeholder={`Ban ${idx + 1}`}
+                        className="w-full"
+                        value={ban}
+                        onChange={(val) => {
+                          if (!isBlueSide) {
+                            const newBans = [...blueBans];
+                            newBans[idx] = val;
+                            setBlueBans(newBans);
+                          } else {
+                            const newBans = [...redBans];
+                            newBans[idx] = val;
+                            setRedBans(newBans);
+                          }
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

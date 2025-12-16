@@ -14,6 +14,34 @@ enum UserStatus {
   SUBSTITUTE
 }
 
+enum ChampionClass {
+  FIGHTER
+  MAGE
+  ASSASSIN
+  TANK
+  MARKSMAN
+  SUPPORT
+  SPECIALIST
+}
+
+model ChampionDefinition {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  
+  laneStyle   LaneAllocation?
+  compStyle   ChampionRole?
+  compStyleSecondary ChampionRole?
+  class       ChampionClass?
+  
+  primaryRole   Position?
+  secondaryRole Position?
+  
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model User {
   id               String             @id @default(cuid())
   email            String             @unique
@@ -30,6 +58,7 @@ model User {
   nationality      String?
   phone            String?
   realName         String?
+  jobTitle         String?    // Cargo específico (ej: CEO, Manager, Psicóloga)
   changeLogs       ChangeLog[]
   comments         Comment[]
   evaluationsGiven PlayerEvaluation[]
@@ -61,6 +90,7 @@ model PlayerProfile {
   lineupId            String?
   phone               String?
   riotId              String?
+  isCaptain           Boolean            @default(false)
   championPool        ChampionPool[]
   matchParticipations MatchParticipant[]
   evaluations         PlayerEvaluation[]
@@ -124,6 +154,7 @@ model Team {
   draftPlans     DraftPlan[]
   players        EnemyPlayer[]
   manualBans     EnemyBan[]
+  manualPicks    EnemyPick[]
   tierLists      TierList[]
 }
 
@@ -146,13 +177,27 @@ model EnemyBan {
   team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 }
 
+model EnemyPick {
+  id           String   @id @default(cuid())
+  teamId       String
+  championName String
+  count        Int      @default(1)
+  notes        String?
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
 
 model Patch {
-  id        String    @id @default(cuid())
-  version   String    @unique
-  startDate DateTime
-  endDate   DateTime?
-  matches   Match[]
+  id           String     @id @default(cuid())
+  version      String     @unique
+  description  String?
+  startDate    DateTime?
+  endDate      DateTime?
+  officialLink String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  matches      Match[]
+  tierLists    TierList[]
 }
 
 model Match {
@@ -371,11 +416,13 @@ model TierList {
   isActive    Boolean            @default(false)
   lineupId    String?
   enemyTeamId String?
+  patchId     String?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   champions   TierListChampion[]
   lineup      Lineup?            @relation(fields: [lineupId], references: [id])
   enemyTeam   Team?              @relation(fields: [enemyTeamId], references: [id])
+  patch       Patch?             @relation(fields: [patchId], references: [id])
   draftPlansAsAlly  DraftPlan[] @relation("AllyTierList")
   draftPlansAsEnemy DraftPlan[] @relation("EnemyTierList")
 }

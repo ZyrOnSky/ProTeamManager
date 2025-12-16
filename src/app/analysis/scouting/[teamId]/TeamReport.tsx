@@ -5,15 +5,21 @@ import { ArrowLeft, Ban, Swords, Trophy, Users, Plus, Trash2, Edit2, Save, X, Ex
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { addEnemyPlayer, updateEnemyPlayer, deleteEnemyPlayer, addEnemyBan, updateEnemyBan, deleteEnemyBan, updateTeamDetails } from '../actions';
+import { 
+  addEnemyPlayer, updateEnemyPlayer, deleteEnemyPlayer, 
+  addEnemyBan, updateEnemyBan, deleteEnemyBan, 
+  addEnemyPick, updateEnemyPick, deleteEnemyPick,
+  updateTeamDetails 
+} from '../actions';
+import { ManualStatsModal } from './ManualStatsModal';
 
 interface TeamReportProps {
   report: any;
 }
 
 export function TeamReport({ report }: TeamReportProps) {
-  const { team, stats, matches, roster, manualBans, tierLists } = report;
-  const [activeTab, setActiveTab] = useState<'overview' | 'roster' | 'bans' | 'tierlists'>('overview');
+  const { team, stats, matches, roster, manualBans, manualPicks, tierLists } = report;
+  const [activeTab, setActiveTab] = useState<'overview' | 'roster' | 'tierlists'>('overview');
   const [isEditingTeam, setIsEditingTeam] = useState(false);
   const [teamForm, setTeamForm] = useState({ opggUrl: team.opggUrl || '', notes: team.notes || '' });
 
@@ -83,12 +89,6 @@ export function TeamReport({ report }: TeamReportProps) {
           Roster Manual
         </button>
         <button 
-          onClick={() => setActiveTab('bans')}
-          className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'bans' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-slate-400 hover:text-white'}`}
-        >
-          Bans Manuales
-        </button>
-        <button 
           onClick={() => setActiveTab('tierlists')}
           className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'tierlists' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-slate-400 hover:text-white'}`}
         >
@@ -98,15 +98,17 @@ export function TeamReport({ report }: TeamReportProps) {
 
       {/* Content */}
       {activeTab === 'overview' && (
-        <OverviewTab stats={stats} team={team} matches={matches} />
+        <OverviewTab 
+          stats={stats} 
+          team={team} 
+          matches={matches} 
+          manualBans={manualBans} 
+          manualPicks={manualPicks} 
+        />
       )}
       
       {activeTab === 'roster' && (
         <RosterTab teamId={team.id} roster={roster} />
-      )}
-
-      {activeTab === 'bans' && (
-        <ManualBansTab teamId={team.id} bans={manualBans} />
       )}
 
       {activeTab === 'tierlists' && (
@@ -116,7 +118,10 @@ export function TeamReport({ report }: TeamReportProps) {
   );
 }
 
-function OverviewTab({ stats, team, matches }: any) {
+function OverviewTab({ stats, team, matches, manualBans, manualPicks }: any) {
+  const [showBansModal, setShowBansModal] = useState(false);
+  const [showPicksModal, setShowPicksModal] = useState(false);
+
   return (
     <div className="space-y-8">
       {/* Stats Overview */}
@@ -145,10 +150,19 @@ function OverviewTab({ stats, team, matches }: any) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Bans Analysis */}
         <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
-          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <Ban className="text-red-500" size={20} />
-            Sus Bans Más Frecuentes
-          </h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Ban className="text-red-500" size={20} />
+              Sus Bans Más Frecuentes
+            </h3>
+            <button 
+              onClick={() => setShowBansModal(true)}
+              className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+              title="Editar Bans Manuales"
+            >
+              <Edit2 size={16} />
+            </button>
+          </div>
           <div className="space-y-4">
             {stats.topBans.map((ban: any, idx: number) => (
               <div key={idx} className="flex items-center justify-between">
@@ -171,10 +185,19 @@ function OverviewTab({ stats, team, matches }: any) {
 
         {/* Picks Analysis */}
         <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
-          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <Swords className="text-blue-500" size={20} />
-            Sus Picks Más Frecuentes
-          </h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Swords className="text-blue-500" size={20} />
+              Sus Picks Más Frecuentes
+            </h3>
+            <button 
+              onClick={() => setShowPicksModal(true)}
+              className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+              title="Editar Picks Manuales"
+            >
+              <Edit2 size={16} />
+            </button>
+          </div>
           <div className="space-y-4">
             {stats.topPicks.map((pick: any, idx: number) => (
               <div key={idx} className="flex items-center justify-between">
@@ -195,6 +218,26 @@ function OverviewTab({ stats, team, matches }: any) {
           </div>
         </div>
       </div>
+
+      <ManualStatsModal 
+        isOpen={showBansModal}
+        onClose={() => setShowBansModal(false)}
+        title="Gestionar Bans Manuales"
+        items={manualBans || []}
+        onAdd={async (name) => { await addEnemyBan(team.id, { championName: name, count: 1 }); }}
+        onUpdate={async (id, count) => { await updateEnemyBan(id, { count }); }}
+        onDelete={async (id) => { await deleteEnemyBan(id); }}
+      />
+
+      <ManualStatsModal 
+        isOpen={showPicksModal}
+        onClose={() => setShowPicksModal(false)}
+        title="Gestionar Picks Manuales"
+        items={manualPicks || []}
+        onAdd={async (name) => { await addEnemyPick(team.id, { championName: name, count: 1 }); }}
+        onUpdate={async (id, count) => { await updateEnemyPick(id, { count }); }}
+        onDelete={async (id) => { await deleteEnemyPick(id); }}
+      />
 
       {/* Role Analysis */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
@@ -282,12 +325,35 @@ function OverviewTab({ stats, team, matches }: any) {
 
 function RosterTab({ teamId, roster }: any) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', role: 'MID', opggUrl: '', notes: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addEnemyPlayer(teamId, form as any);
+    if (editingId) {
+      await updateEnemyPlayer(editingId, form as any);
+      setEditingId(null);
+    } else {
+      await addEnemyPlayer(teamId, form as any);
+    }
     setIsAdding(false);
+    setForm({ name: '', role: 'MID', opggUrl: '', notes: '' });
+  };
+
+  const handleEdit = (player: any) => {
+    setForm({
+      name: player.name,
+      role: player.role,
+      opggUrl: player.opggUrl || '',
+      notes: player.notes || ''
+    });
+    setEditingId(player.id);
+    setIsAdding(true);
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setEditingId(null);
     setForm({ name: '', role: 'MID', opggUrl: '', notes: '' });
   };
 
@@ -302,7 +368,7 @@ function RosterTab({ teamId, roster }: any) {
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold">Roster Conocido</h3>
         <button 
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => { setIsAdding(true); setEditingId(null); setForm({ name: '', role: 'MID', opggUrl: '', notes: '' }); }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} /> Agregar Jugador
@@ -311,6 +377,7 @@ function RosterTab({ teamId, roster }: any) {
 
       {isAdding && (
         <form onSubmit={handleSubmit} className="bg-slate-950/50 p-4 rounded-lg mb-6 border border-slate-800">
+          <h4 className="text-sm font-bold text-slate-400 mb-3">{editingId ? 'Editar Jugador' : 'Nuevo Jugador'}</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <input 
               placeholder="Nombre / Riot ID" 
@@ -344,7 +411,7 @@ function RosterTab({ teamId, roster }: any) {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setIsAdding(false)} className="px-3 py-1 text-slate-400 hover:text-white">Cancelar</button>
+            <button type="button" onClick={handleCancel} className="px-3 py-1 text-slate-400 hover:text-white">Cancelar</button>
             <button type="submit" className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white">Guardar</button>
           </div>
         </form>
@@ -365,104 +432,25 @@ function RosterTab({ teamId, roster }: any) {
               )}
               {player.notes && <p className="text-sm text-slate-400">{player.notes}</p>}
             </div>
-            <button 
-              onClick={() => handleDelete(player.id)}
-              className="text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Trash2 size={16} />
-            </button>
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button 
+                onClick={() => handleEdit(player)}
+                className="p-1 text-slate-600 hover:text-blue-500"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button 
+                onClick={() => handleDelete(player.id)}
+                className="p-1 text-slate-600 hover:text-red-500"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
         {(!roster || roster.length === 0) && !isAdding && (
           <div className="col-span-full text-center py-8 text-slate-500">
             No hay jugadores registrados manualmente.
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ManualBansTab({ teamId, bans }: any) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [form, setForm] = useState({ championName: '', count: 1, notes: '' });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await addEnemyBan(teamId, form);
-    setIsAdding(false);
-    setForm({ championName: '', count: 1, notes: '' });
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm('¿Eliminar este registro de ban?')) {
-      await deleteEnemyBan(id);
-    }
-  };
-
-  return (
-    <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold">Bans Manuales (VODs/SoloQ)</h3>
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus size={16} /> Registrar Ban
-        </button>
-      </div>
-
-      {isAdding && (
-        <form onSubmit={handleSubmit} className="bg-slate-950/50 p-4 rounded-lg mb-6 border border-slate-800">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <input 
-              placeholder="Campeón" 
-              className="bg-slate-900 border border-slate-700 rounded px-3 py-2"
-              value={form.championName}
-              onChange={e => setForm({...form, championName: e.target.value})}
-              required
-            />
-            <input 
-              type="number"
-              min="1"
-              placeholder="Cantidad" 
-              className="bg-slate-900 border border-slate-700 rounded px-3 py-2"
-              value={form.count}
-              onChange={e => setForm({...form, count: parseInt(e.target.value)})}
-            />
-            <input 
-              placeholder="Notas (opcional)" 
-              className="bg-slate-900 border border-slate-700 rounded px-3 py-2"
-              value={form.notes}
-              onChange={e => setForm({...form, notes: e.target.value})}
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setIsAdding(false)} className="px-3 py-1 text-slate-400 hover:text-white">Cancelar</button>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white">Guardar</button>
-          </div>
-        </form>
-      )}
-
-      <div className="space-y-2">
-        {bans?.map((ban: any) => (
-          <div key={ban.id} className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 flex justify-between items-center group">
-            <div className="flex items-center gap-4">
-              <span className="font-bold w-32">{ban.championName}</span>
-              <span className="text-sm text-slate-400 bg-slate-900 px-2 py-1 rounded">x{ban.count} veces</span>
-              {ban.notes && <span className="text-sm text-slate-500 italic">{ban.notes}</span>}
-            </div>
-            <button 
-              onClick={() => handleDelete(ban.id)}
-              className="text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-        {(!bans || bans.length === 0) && !isAdding && (
-          <div className="text-center py-8 text-slate-500">
-            No hay bans registrados manualmente.
           </div>
         )}
       </div>

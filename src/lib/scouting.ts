@@ -54,6 +54,7 @@ export async function getTeamScoutingReport(teamId: string) {
       },
       players: true,
       manualBans: true,
+      manualPicks: true,
       tierLists: {
         include: {
           champions: true
@@ -105,6 +106,11 @@ export async function getTeamScoutingReport(teamId: string) {
     TOP: {}, JUNGLE: {}, MID: {}, ADC: {}, SUPPORT: {}
   };
 
+  // Add manual picks
+  team.manualPicks.forEach(pick => {
+    pickCounts[pick.championName] = (pickCounts[pick.championName] || 0) + pick.count;
+  });
+
   team.matchesAsEnemy.forEach(match => {
     match.participants.forEach(p => {
       pickCounts[p.championName] = (pickCounts[p.championName] || 0) + 1;
@@ -151,6 +157,8 @@ export async function getTeamScoutingReport(teamId: string) {
     },
     matches: team.matchesAsEnemy,
     roster: team.players,
+    manualBans: team.manualBans,
+    manualPicks: team.manualPicks,
     tierLists: team.tierLists
   };
 }

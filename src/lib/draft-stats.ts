@@ -20,12 +20,17 @@ export async function getDraftContext(draft: any) {
 
   // 2. Get our global champion stats (Filtered by Lineup if selected)
   const whereClause: any = {
-    type: { in: ['SCRIM', 'TOURNAMENT'] },
-    result: { not: null }
+    type: { in: ['SCRIM', 'TOURNAMENT', 'SOLOQ'] }, // Added SOLOQ for broader context
+    // result: { not: null } // Removed to include pending/incomplete matches
   };
   
   if (draft.lineupId) {
-    whereClause.lineupId = draft.lineupId;
+    // Include matches for this lineup OR matches without any lineup (global/untagged)
+    // This prevents hiding stats if the user forgot to tag the match with a lineup
+    whereClause.OR = [
+      { lineupId: draft.lineupId },
+      { lineupId: null }
+    ];
   }
 
   const ourMatches = await prisma.match.findMany({

@@ -54,10 +54,41 @@ export default function ScheduleClient() {
   const [editingLink, setEditingLink] = useState(false);
   const [scheduleLink, setScheduleLink] = useState("");
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [userTimezone, setUserTimezone] = useState("GMT-5"); // Default
+
+  const TIMEZONE_OFFSETS: Record<string, number> = {
+    "GMT-5": -5,
+    "GMT-6": -6,
+    "GMT-4": -4,
+    "GMT-3": -3,
+    "GMT+1": 1,
+    "UTC": 0,
+  };
 
   useEffect(() => {
+    fetchSettings();
     fetchLineups();
   }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.timezone) setUserTimezone(data.timezone);
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    }
+  };
+
+  const getShiftedDate = (dateStr: string | Date) => {
+    const date = new Date(dateStr);
+    const targetOffset = TIMEZONE_OFFSETS[userTimezone] ?? -5;
+    const localOffset = -date.getTimezoneOffset() / 60; // in hours. e.g. GMT-5 is -5.
+    const diff = targetOffset - localOffset;
+    return new Date(date.getTime() + diff * 60 * 60 * 1000);
+  };
 
   useEffect(() => {
     if (selectedLineupId) {
@@ -190,7 +221,7 @@ export default function ScheduleClient() {
         formattedDate = format(day, dateFormat);
         const cloneDay = day;
         
-        const dayEvents = events.filter(e => isSameDay(new Date(e.startTime), cloneDay));
+        const dayEvents = events.filter(e => isSameDay(getShiftedDate(e.startTime), cloneDay));
 
         days.push(
           <div
@@ -220,7 +251,7 @@ export default function ScheduleClient() {
                   <div className="font-semibold truncate">{event.title}</div>
                   {event.startTime && (
                     <div className="text-[10px] opacity-75">
-                      {format(new Date(event.startTime), "HH:mm")}
+                      {format(getShiftedDate(event.startTime), "HH:mm")}
                     </div>
                   )}
                 </div>
@@ -251,7 +282,7 @@ export default function ScheduleClient() {
     return (
       <div className="grid grid-cols-7 gap-px bg-slate-800 border border-slate-800 rounded-lg overflow-hidden">
         {days.map((day) => {
-          const dayEvents = events.filter(e => isSameDay(new Date(e.startTime), day));
+          const dayEvents = events.filter(e => isSameDay(getShiftedDate(e.startTime), day));
           return (
             <div 
               key={day.toString()} 
@@ -276,7 +307,7 @@ export default function ScheduleClient() {
                     <div className="font-bold mb-1">{event.title}</div>
                     <div className="flex items-center gap-1 opacity-75 mb-1">
                       <Clock size={10} />
-                      {format(new Date(event.startTime), "HH:mm")}
+                      {format(getShiftedDate(event.startTime), "HH:mm")}
                     </div>
                     {event.opponentName && (
                       <div className="truncate opacity-75">vs {event.opponentName}</div>
@@ -447,6 +478,7 @@ export default function ScheduleClient() {
                 event={selectedEvent}
                 selectedDate={selectedDate}
                 lineupId={selectedLineupId}
+                userTimezone={userTimezone}
                 onClose={() => setShowEventModal(false)}
                 onSave={() => {
                   fetchEvents();
