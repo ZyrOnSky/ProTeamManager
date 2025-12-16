@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import EditSoloQMatchForm from "./EditSoloQMatchForm";
 
+export const dynamic = 'force-dynamic';
+
 interface EditMatchPageProps {
   params: Promise<{
     id: string;

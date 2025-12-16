@@ -3,6 +3,8 @@ import { Plus, Swords, Calendar, Trash2 } from 'lucide-react';
 import { getDraftPlans } from '@/lib/draft';
 import { deleteDraftPlan } from './actions';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DraftDashboard() {
   const drafts = await getDraftPlans();
 

@@ -1,6 +1,8 @@
 import { getChampionDetail } from '@/lib/stats';
 import ChampionDetailView from './ChampionDetailView';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ChampionDetailPage({ params }: { params: Promise<{ champion: string }> }) {
   const { champion } = await params;
   const championName = decodeURIComponent(champion);

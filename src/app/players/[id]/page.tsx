@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Shield, Sword, Crosshair, Heart, Zap, Trophy, Target, Skull } from "lucide-react";
 import { PlayerDetailClient } from "./PlayerDetailClient";
 
+export const dynamic = 'force-dynamic';
+
 // Mapa de iconos por rol
 const RoleIcons: Record<string, any> = {
   TOP: Shield,
