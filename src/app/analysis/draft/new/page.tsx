@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { DraftForm } from "./DraftForm";
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewDraftPage() {
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } });
   const lineups = await prisma.lineup.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } });
