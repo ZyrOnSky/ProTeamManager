@@ -13,6 +13,7 @@ export default withAuth(
         // Rutas públicas que no requieren autenticación
         if (
           path.startsWith("/api/auth") ||
+          path.startsWith("/api/test-db") ||
           path === "/login" ||
           path.startsWith("/music") ||
           path.startsWith("/videos") ||
