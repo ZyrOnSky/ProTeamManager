@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Shield, Sword, Crosshair, Heart, Zap, Users, UserCog, Briefcase, Crown } from "lucide-react";
+import { Shield, Sword, Crosshair, Heart, Zap, Users, UserCog, Briefcase, Crown, Filter, Search } from "lucide-react";
 import { AddMemberForm } from "./AddMemberForm";
 import { UserStatusManager } from "@/components/UserStatusManager";
 import { toggleCaptain } from "./actions";
@@ -27,13 +27,26 @@ interface RosterManagementClientProps {
 
 export function RosterManagementClient({ players, staff, lineups, currentUserRole, currentUserId }: RosterManagementClientProps) {
   const [activeTab, setActiveTab] = useState<"PLAYERS" | "STAFF" | "DELETED">("PLAYERS");
+  const [filterTeam, setFilterTeam] = useState("ALL");
+  const [filterRole, setFilterRole] = useState("ALL");
+  const [filterStatus, setFilterStatus] = useState("ALL");
   const router = useRouter();
 
   const canManage = currentUserRole === "ADMIN" || currentUserRole === "COACH";
   const isAdmin = currentUserRole === "ADMIN";
 
   // Filter lists
-  const activePlayers = players.filter(p => p.status !== "DELETED");
+  const activePlayers = players.filter(p => {
+    if (p.status === "DELETED") return false;
+    
+    // Apply filters
+    if (filterTeam !== "ALL" && p.playerProfile?.lineupId !== filterTeam) return false;
+    if (filterRole !== "ALL" && p.playerProfile?.position !== filterRole) return false;
+    if (filterStatus !== "ALL" && p.status !== filterStatus) return false;
+    
+    return true;
+  });
+
   const activeStaff = staff.filter(s => s.status !== "DELETED");
   const deletedUsers = [...players, ...staff].filter(u => u.status === "DELETED");
 
@@ -135,7 +148,62 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
       </div>
 
       {activeTab === "PLAYERS" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <>
+        {/* Filters */}
+        <div className="flex flex-wrap gap-3 mb-6 p-3 bg-slate-900/50 border border-slate-800 rounded-xl items-center">
+            <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-wider mr-2">
+                <Filter size={14} />
+                Filtros
+            </div>
+            
+            <select 
+                value={filterTeam}
+                onChange={(e) => setFilterTeam(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-white focus:border-blue-500 outline-none"
+            >
+                <option value="ALL">Todos los Equipos</option>
+                {lineups.map(l => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+            </select>
+
+            <select 
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-white focus:border-blue-500 outline-none"
+            >
+                <option value="ALL">Todos los Roles</option>
+                {Object.keys(RoleIcons).map(role => (
+                    <option key={role} value={role}>{role}</option>
+                ))}
+            </select>
+
+            <select 
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-white focus:border-blue-500 outline-none"
+            >
+                <option value="ALL">Todos los Estados</option>
+                <option value="ACTIVE">Activo</option>
+                <option value="INACTIVE">Inactivo</option>
+                <option value="SUBSTITUTE">Suplente</option>
+            </select>
+
+            {(filterTeam !== "ALL" || filterRole !== "ALL" || filterStatus !== "ALL") && (
+                <button 
+                    onClick={() => {
+                        setFilterTeam("ALL");
+                        setFilterRole("ALL");
+                        setFilterStatus("ALL");
+                    }}
+                    className="text-xs text-red-400 hover:text-red-300 underline ml-auto"
+                >
+                    Limpiar
+                </button>
+            )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {activePlayers.map((player) => {
             const position = player.playerProfile?.position || "FILL";
             const Icon = RoleIcons[position] || Shield;
@@ -157,78 +225,77 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
               <div 
                 key={player.id} 
                 onClick={() => router.push(`/players/${player.id}`)}
-                className="block bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-green-500 transition-all group relative overflow-hidden cursor-pointer"
+                className="block bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-green-500 transition-all group relative overflow-hidden cursor-pointer"
               >
-                {/* Score Badge */}
-                <div className="absolute bottom-6 right-6">
-                    <div className="flex flex-col items-center">
-                        <span className={`text-5xl font-bold leading-none ${scoreColor}`}>
-                            {stats.score}
-                        </span>
-                        <span className="text-xs uppercase text-slate-500 font-bold mt-1">Valor</span>
+                {/* Header: Name, Captain, Status */}
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-white leading-none truncate max-w-[150px]" title={player.name}>{player.name}</h3>
+                        {isCaptain && <Crown size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />}
+                        {canManage && (
+                            <button
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    await toggleCaptain(player.id, player.playerProfile?.lineupId, !isCaptain);
+                                }}
+                                className={`opacity-0 group-hover:opacity-100 transition-opacity ${isCaptain ? 'text-yellow-500' : 'text-slate-600 hover:text-yellow-500'}`}
+                            >
+                                <Crown size={12} />
+                            </button>
+                        )}
+                    </div>
+                    <div className="scale-90 origin-top-right">
+                        <UserStatusManager 
+                            userId={player.id}
+                            currentStatus={player.status}
+                            userRole={player.role}
+                            currentUserRole={currentUserRole}
+                            currentUserId={currentUserId}
+                            userName={player.name}
+                        />
                     </div>
                 </div>
 
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-slate-800 rounded-lg text-slate-400 group-hover:text-green-500 group-hover:bg-green-500/10 transition-colors">
-                    <Icon size={24} />
-                  </div>
-                  <div className="flex flex-col items-end gap-1"> 
-                    <UserStatusManager 
-                      userId={player.id}
-                      currentStatus={player.status}
-                      userRole={player.role}
-                      currentUserRole={currentUserRole}
-                      currentUserId={currentUserId}
-                      userName={player.name}
-                    />
-                    <span className="text-xs font-mono text-slate-500 bg-slate-950 px-2 py-1 rounded">
-                      {position}
-                    </span>
+                {/* Sub-header: Role, Team */}
+                <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
+                    <div className="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                        <Icon size={12} className={scoreColor} />
+                        <span className="font-bold">{position}</span>
+                    </div>
                     {lineupName && (
-                      <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded">
-                        {lineupName}
-                      </span>
+                        <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20 truncate max-w-[120px]">
+                            {lineupName}
+                        </span>
                     )}
-                  </div>
                 </div>
-                
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-xl font-bold text-white">{player.name}</h3>
-                  {isCaptain && <Crown size={18} className="text-yellow-500 fill-yellow-500" />}
-                  
-                  {canManage && (
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await toggleCaptain(player.id, player.playerProfile?.lineupId, !isCaptain);
-                      }}
-                      className={`p-1 rounded hover:bg-slate-800 transition-colors ${isCaptain ? 'text-yellow-500/50 hover:text-yellow-500' : 'text-slate-700 hover:text-yellow-500'}`}
-                      title={isCaptain ? "Quitar Capitanía" : "Nombrar Capitán"}
-                    >
-                      <Crown size={14} />
-                    </button>
-                  )}
-                </div>
-                <p className="text-slate-400 text-sm mb-4">{player.email}</p>
-                
-                <div className="flex gap-2 mt-4">
-                  <div className="flex flex-col bg-slate-950 px-3 py-1.5 rounded border border-slate-800">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">KDA</span>
-                    <span className={`text-sm font-mono font-bold ${stats.kda !== "-" ? "text-blue-300" : "text-slate-600"}`}>
-                        {stats.kda}
-                    </span>
-                  </div>
-                  <div className="flex flex-col bg-slate-950 px-3 py-1.5 rounded border border-slate-800">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">Winrate</span>
-                    <span className={`text-sm font-mono font-bold ${
-                        stats.winrate !== "-" 
-                            ? (parseInt(stats.winrate as string) >= 50 ? "text-green-400" : "text-red-400") 
-                            : "text-slate-600"
-                    }`}>
-                        {stats.winrate}
-                    </span>
-                  </div>
+
+                {/* Footer: Stats & Score */}
+                <div className="flex items-end justify-between pt-3 border-t border-slate-800/50">
+                    <div className="flex gap-3">
+                        <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">KDA</span>
+                            <span className={`text-sm font-mono font-bold ${stats.kda !== "-" ? "text-blue-300" : "text-slate-600"}`}>
+                                {stats.kda}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Winrate</span>
+                            <span className={`text-sm font-mono font-bold ${
+                                stats.winrate !== "-" 
+                                    ? (parseInt(stats.winrate as string) >= 50 ? "text-green-400" : "text-red-400") 
+                                    : "text-slate-600"
+                            }`}>
+                                {stats.winrate}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="text-right">
+                        <span className={`text-2xl font-bold leading-none ${scoreColor}`}>
+                            {stats.score}
+                        </span>
+                        <span className="text-[10px] text-slate-500 uppercase font-bold block">Valor</span>
+                    </div>
                 </div>
               </div>
             );
@@ -236,10 +303,11 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
 
           {activePlayers.length === 0 && (
             <div className="col-span-full text-center py-12 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
-              <p className="text-slate-500">No hay jugadores activos en el roster.</p>
+              <p className="text-slate-500">No hay jugadores que coincidan con los filtros.</p>
             </div>
           )}
         </div>
+        </>
       )}
 
       {activeTab === "STAFF" && (
