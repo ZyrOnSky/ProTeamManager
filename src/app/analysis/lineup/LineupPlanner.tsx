@@ -264,11 +264,17 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
               const currentFilters = { side, allocation: alloc, style };
               const stats = getPlayerRoleStats(player.id, role.id, currentFilters);
               
-              // We only care if they have played enough games to be considered reliable-ish, 
+              // We only care if they have played enough games to be considered reliable-ish,
               // or just raw score if we want pure potential. Let's use raw score but prefer > 0 matches.
-              if (stats && stats.matches > 0 && stats.score > bestScore) {
-                bestScore = stats.score;
-                bestFilters = currentFilters;
+              if (stats) {
+                const matchesCount = typeof stats.matches === 'number'
+                  ? stats.matches
+                  : parseInt(String(stats.matches), 10) || 0;
+
+                if (matchesCount > 0 && stats.score > bestScore) {
+                  bestScore = stats.score;
+                  bestFilters = currentFilters;
+                }
               }
             }
           }
