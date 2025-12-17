@@ -432,12 +432,13 @@ export function PlayerDetailClient({
   const trendData = [...matches]
     .sort((a: any, b: any) => new Date(a.match.date).getTime() - new Date(b.match.date).getTime())
     .slice(-20)
-    .map((m: any) => {
+    .map((m: any, index: number) => {
       const durationMin = m.match.duration ? m.match.duration / 60 : 30; // Default to 30 if missing
       const csPerMin = m.cs ? parseFloat((m.cs / durationMin).toFixed(1)) : 0;
       const kda = m.deaths > 0 ? parseFloat(((m.kills + m.assists) / m.deaths).toFixed(2)) : (m.kills + m.assists);
       return {
         date: new Date(m.match.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        uniqueId: `${new Date(m.match.date).getTime()}-${index}`,
         csPerMin,
         kda
       };
@@ -536,6 +537,7 @@ export function PlayerDetailClient({
     
     return {
       date: new Date(match.match.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      uniqueId: `${new Date(match.match.date).getTime()}-${index}`,
       overall,
       wrScore,
       kdaScore,
@@ -1298,11 +1300,23 @@ export function PlayerDetailClient({
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={trendData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                      <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                      <XAxis 
+                        dataKey="uniqueId" 
+                        stroke="#94a3b8" 
+                        tick={{ fontSize: 12 }} 
+                        tickFormatter={(value) => {
+                          const timestamp = parseInt(value.split('-')[0]);
+                          return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        }}
+                      />
                       <YAxis yAxisId="left" stroke="#fbbf24" label={{ value: 'CS/min', angle: -90, position: 'insideLeft', fill: '#fbbf24' }} />
                       <YAxis yAxisId="right" orientation="right" stroke="#3b82f6" label={{ value: 'KDA', angle: 90, position: 'insideRight', fill: '#3b82f6' }} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f1f5f9' }}
+                        labelFormatter={(value) => {
+                          const timestamp = parseInt(value.split('-')[0]);
+                          return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        }}
                       />
                       <Legend />
                       <Line yAxisId="left" type="monotone" dataKey="csPerMin" stroke="#fbbf24" activeDot={{ r: 8 }} name="CS/min" />
@@ -1328,10 +1342,22 @@ export function PlayerDetailClient({
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={progressData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                      <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                      <XAxis 
+                        dataKey="uniqueId" 
+                        stroke="#94a3b8" 
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) => {
+                          const timestamp = parseInt(value.split('-')[0]);
+                          return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        }}
+                      />
                       <YAxis domain={[0, 100]} stroke="#94a3b8" label={{ value: 'Puntaje (0-100)', angle: -90, position: 'insideLeft', fill: '#94a3b8' }} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f1f5f9' }}
+                        labelFormatter={(value) => {
+                          const timestamp = parseInt(value.split('-')[0]);
+                          return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        }}
                         formatter={(value: number, name: string, props: any) => {
                           const { rawWR, rawKDA, rawCS, rawVIS } = props.payload;
                           if (name === "Valor General") return [`${value} pts`, name];
