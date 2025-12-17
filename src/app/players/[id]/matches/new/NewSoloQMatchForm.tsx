@@ -110,8 +110,21 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <div className="max-w-4xl mx-auto">
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 p-8 overflow-hidden">
+      {/* 🎥 VIDEO BACKGROUND */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/3-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto">
         <header className="mb-8">
           <Link 
             href={`/players/${userId}`}
@@ -127,7 +140,7 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* General Info */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-4 text-blue-400">
               <Swords size={20} />
               <h2 className="font-bold text-lg">Información General</h2>
@@ -250,13 +263,14 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
                   <option value="NEUTRAL">Neutral (Estándar)</option>
                   <option value="STRONG_SIDE">Strong Side (Prioridad)</option>
                   <option value="WEAK_SIDE">Weak Side (Jugar Seguro)</option>
+                  <option value="ROAMING">Roaming</option>
                 </select>
               </div>
             </div>
           </div>
 
           {/* Performance Stats */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-4 text-green-400">
               <Activity size={20} />
               <h2 className="font-bold text-lg">Rendimiento</h2>
@@ -326,7 +340,7 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
           </div>
 
           {/* Matchup */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-4 text-red-400">
               <Target size={20} />
               <h2 className="font-bold text-lg">Matchup</h2>
@@ -358,7 +372,7 @@ export default function NewSoloQMatchForm({ playerProfileId, userId, playerName 
           </div>
 
           {/* Ratings */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-4 text-purple-400">
               <Brain size={20} />
               <h2 className="font-bold text-lg">Autoevaluación (0-10)</h2>

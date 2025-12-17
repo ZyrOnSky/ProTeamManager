@@ -184,8 +184,8 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
 
       {/* Create Modal */}
       {isCreating && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white">Crear Nuevo Equipo</h2>
               <button onClick={resetForm} className="text-slate-400 hover:text-white">
@@ -199,7 +199,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
                 <input
                   type="text"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                   placeholder="Ej: Main Roster, Academy..."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -208,7 +208,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Descripción</label>
                 <textarea
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none resize-none h-24"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none resize-none h-24"
                   placeholder="Notas opcionales..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -227,8 +227,8 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
 
       {/* Edit Modal */}
       {editingLineup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-2xl my-8">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl p-6 w-full max-w-2xl my-8 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white">Editar Equipo: {editingLineup.name}</h2>
               <button onClick={resetForm} className="text-slate-400 hover:text-white">
@@ -245,7 +245,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
                     <input
                       type="text"
                       required
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                     />
@@ -253,7 +253,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-1">Descripción</label>
                     <textarea
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none resize-none h-24"
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none resize-none h-24"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                     />
@@ -283,7 +283,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                     {/* Players */}
                     {editingLineup.players.map((p: any) => (
-                      <div key={p.id} className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800">
+                      <div key={p.id} className="flex justify-between items-center bg-slate-950/50 p-2 rounded border border-slate-800">
                         <div>
                           <div className="text-sm font-bold text-white">{p.user.name}</div>
                           <div className="text-xs text-green-400">Player ({p.position})</div>
@@ -298,7 +298,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
                     ))}
                     {/* Staff */}
                     {editingLineup.staff.map((s: any) => (
-                      <div key={s.id} className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800">
+                      <div key={s.id} className="flex justify-between items-center bg-slate-950/50 p-2 rounded border border-slate-800">
                         <div>
                           <div className="text-sm font-bold text-white">{s.name}</div>
                           <div className="text-xs text-purple-400">Staff / Coach</div>
@@ -322,7 +322,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
                   <h3 className="text-sm font-bold text-slate-300 uppercase mb-3">Añadir Miembro</h3>
                   <div className="flex gap-2">
                     <select
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
+                      className="flex-1 bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
                       value={selectedUserToAdd}
                       onChange={(e) => setSelectedUserToAdd(e.target.value)}
                     >
@@ -353,11 +353,11 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {lineups.map((lineup) => (
-          <div key={lineup.id} className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-blue-500 transition-colors relative group">
+          <div key={lineup.id} className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 hover:border-blue-500 transition-colors relative group shadow-lg">
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
               <button 
                 onClick={() => openEdit(lineup)}
-                className="p-2 bg-slate-800 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                className="p-2 bg-slate-800 hover:bg-blue-600 text-white rounded-lg transition-colors shadow-md"
               >
                 <Edit2 size={16} />
               </button>
@@ -379,7 +379,7 @@ export function LineupManagementClient({ lineups: initialLineups, allUsers }: Li
                 <div className="flex flex-wrap gap-2">
                   {lineup.players.length > 0 ? (
                     lineup.players.map((p: any) => (
-                      <span key={p.id} className="text-xs bg-slate-950 border border-slate-800 px-2 py-1 rounded text-slate-300">
+                      <span key={p.id} className="text-xs bg-slate-950/50 border border-slate-800 px-2 py-1 rounded text-slate-300">
                         {p.user.name}
                       </span>
                     ))

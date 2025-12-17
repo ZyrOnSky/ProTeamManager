@@ -78,7 +78,7 @@ export function ChampionPoolManager({ userId, initialPool }: ChampionPoolManager
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+    <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Star className="text-yellow-500" size={20} />

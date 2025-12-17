@@ -75,18 +75,31 @@ export default async function PlayerDetailPage(props: { params: Promise<{ id: st
   const attendances = player.eventAttendances || [];
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <div className="max-w-6xl mx-auto">
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 p-8 overflow-hidden">
+      {/* 🎥 VIDEO BACKGROUND */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/6-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto">
         <header className="mb-8">
           <Link 
             href="/players" 
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+            className="inline-flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm border border-slate-700 shadow-lg px-4 py-2 rounded-lg text-slate-300 hover:text-white mb-4 transition-all hover:scale-105"
           >
             <ArrowLeft size={20} />
             Volver al Roster
           </Link>
           
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-900 p-6 rounded-2xl border border-slate-800">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-900/80 backdrop-blur-sm p-6 rounded-2xl border border-slate-800 shadow-xl">
             <div className="flex items-center gap-6">
               <div className="p-4 bg-slate-800 rounded-xl text-green-500">
                 <RoleIcon size={40} />

@@ -35,8 +35,21 @@ export default async function ScrimsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <div className="max-w-6xl mx-auto">
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 p-8 overflow-hidden">
+      {/* 🎥 VIDEO BACKGROUND */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/1-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link href="/" className="p-2 hover:bg-slate-800 rounded-lg transition-colors">

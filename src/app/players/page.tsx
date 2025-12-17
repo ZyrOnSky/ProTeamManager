@@ -56,11 +56,24 @@ export default async function PlayersPage() {
   const lineups = await prisma.lineup.findMany();
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <div className="max-w-6xl mx-auto">
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 p-8 overflow-hidden">
+      {/* 🎥 VIDEO BACKGROUND */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/5-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href="/" className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+            <Link href="/" className="p-2 bg-slate-900/80 backdrop-blur-sm border border-slate-700 shadow-lg hover:bg-slate-800 rounded-lg transition-all hover:scale-105">
               <ArrowLeft size={24} />
             </Link>
             <div>
@@ -71,7 +84,7 @@ export default async function PlayersPage() {
           
           <Link 
             href="/hierarchy"
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors border border-slate-700"
+            className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm hover:bg-slate-800 text-white px-4 py-2 rounded-lg transition-all border border-slate-700 shadow-lg hover:scale-105"
           >
             <Network size={20} className="text-blue-400" />
             Ver Jerarquía

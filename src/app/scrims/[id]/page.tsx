@@ -45,12 +45,27 @@ export default async function ScrimDetailPage(props: { params: Promise<{ id: str
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
-      <ScrimDetailClient 
-        match={match} 
-        roster={roster} 
-        userRole={session.user.role}
-      />
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 overflow-hidden">
+      {/* 🎥 VIDEO BACKGROUND */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/1-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div className="relative z-10">
+        <ScrimDetailClient 
+          match={match}  
+          roster={roster} 
+          userRole={session.user.role}
+        />
+      </div>
     </main>
   );
 }

@@ -248,7 +248,7 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
               <div 
                 key={player.id} 
                 onClick={() => router.push(`/players/${player.id}`)}
-                className="block bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-green-500 transition-all group relative overflow-hidden cursor-pointer"
+                className="block bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-4 hover:border-green-500 transition-all group relative overflow-hidden cursor-pointer shadow-lg"
               >
                 {/* Header: Name, Captain, Status */}
                 <div className="flex justify-between items-start mb-2">

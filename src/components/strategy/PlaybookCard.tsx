@@ -39,7 +39,7 @@ export function PlaybookCard({ playbook }: PlaybookCardProps) {
     return (
         <Link
             href={`/strategy/playbook/${playbook.id}`}
-            className="group bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:bg-slate-900 hover:border-blue-500/50 transition-all duration-300 relative overflow-hidden block"
+            className="group bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 hover:bg-slate-900/90 hover:border-blue-500/50 transition-all duration-300 relative overflow-hidden block"
         >
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <button 

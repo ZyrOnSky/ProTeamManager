@@ -31,8 +31,21 @@ export default async function LineupsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <div className="max-w-6xl mx-auto">
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 p-8 overflow-hidden">
+      {/* 🎥 VIDEO BACKGROUND */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/9-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto">
         <header className="mb-8 flex items-center gap-4">
           <Link href="/players" className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white">
             <ArrowLeft size={24} />

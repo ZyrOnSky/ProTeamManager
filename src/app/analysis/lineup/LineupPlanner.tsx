@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Shield, Sword, Zap, Crosshair, Heart, AlertCircle, Filter, Save, FolderOpen, Trash2 } from 'lucide-react';
+import { Shield, Sword, Zap, Crosshair, Heart, AlertCircle, Filter, Save, FolderOpen, Trash2, Wand2, Sparkles, Puzzle, Map, Footprints, Flame, Target } from 'lucide-react';
 import { saveLineupConfiguration, deleteLineupConfiguration } from '@/app/actions/lineup-actions';
 import { useRouter } from 'next/navigation';
 
 interface MatchParticipant {
   position: string;
+  championName: string; // Added championName
   kills: number | null;
   deaths: number | null;
   assists: number | null;
@@ -107,6 +108,7 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
   // Save/Load Modal State
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
+  const [isCompModalOpen, setIsCompModalOpen] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -127,12 +129,12 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
     }));
   };
 
-  const getPlayerRoleStats = (playerId: string, roleId: string) => {
+  const getPlayerRoleStats = (playerId: string, roleId: string, overrideFilters?: FilterState) => {
     if (!playerId) return null;
     const player = players.find(p => p.id === playerId);
     if (!player || !player.playerProfile) return null;
 
-    const filters = roleFilters[roleId];
+    const filters = overrideFilters || roleFilters[roleId];
 
     // 1. Filter Matches
     const matches = player.playerProfile.matchParticipations.filter(m => {
@@ -209,6 +211,339 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
     setAssignments(prev => ({ ...prev, [roleId]: playerId }));
   };
 
+  const recommendLineup = () => {
+    const scores: { playerId: string, roleId: string, score: number }[] = [];
+
+    ROLES.forEach(role => {
+      availablePlayers.forEach(player => {
+        const stats = getPlayerRoleStats(player.id, role.id);
+        if (stats && typeof stats.score === 'number') {
+          scores.push({ playerId: player.id, roleId: role.id, score: stats.score });
+        }
+      });
+    });
+
+    // Sort by score descending
+    scores.sort((a, b) => b.score - a.score);
+
+    const newAssignments: Record<string, string> = {
+        TOP: '', JUNGLE: '', MID: '', ADC: '', SUPPORT: ''
+    };
+    const assignedPlayers = new Set<string>();
+    const assignedRoles = new Set<string>();
+
+    for (const item of scores) {
+      if (!assignedPlayers.has(item.playerId) && !assignedRoles.has(item.roleId)) {
+        newAssignments[item.roleId] = item.playerId;
+        assignedPlayers.add(item.playerId);
+        assignedRoles.add(item.roleId);
+      }
+    }
+    
+    setAssignments(newAssignments);
+  };
+
+  const findPeakPerformanceLineup = () => {
+    // Define all possible filter options to iterate
+    const SIDES = ['ALL', 'BLUE', 'RED'];
+    const ALLOCATIONS = ['ALL', 'STRONG_SIDE', 'WEAK_SIDE', 'NEUTRAL', 'ROAMING'];
+    const STYLES = ['ALL', 'CARRY', 'UTILITY', 'ENGAGE', 'POKE', 'PROTECT', 'SPLIT_PUSH'];
+
+    const candidates: { playerId: string, roleId: string, score: number, filters: FilterState }[] = [];
+
+    // 1. Find peak for every player in every role
+    for (const role of ROLES) {
+      for (const player of availablePlayers) {
+        let bestScore = -1;
+        let bestFilters: FilterState | null = null;
+
+        // Iterate all combinations to find the player's "Peak"
+        for (const side of SIDES) {
+          for (const alloc of ALLOCATIONS) {
+            for (const style of STYLES) {
+              const currentFilters = { side, allocation: alloc, style };
+              const stats = getPlayerRoleStats(player.id, role.id, currentFilters);
+              
+              // We only care if they have played enough games to be considered reliable-ish, 
+              // or just raw score if we want pure potential. Let's use raw score but prefer > 0 matches.
+              if (stats && stats.matches > 0 && stats.score > bestScore) {
+                bestScore = stats.score;
+                bestFilters = currentFilters;
+              }
+            }
+          }
+        }
+
+        if (bestScore > 0 && bestFilters) {
+          candidates.push({
+            playerId: player.id,
+            roleId: role.id,
+            score: bestScore,
+            filters: bestFilters
+          });
+        }
+      }
+    }
+
+    // 2. Sort by Score Descending
+    candidates.sort((a, b) => b.score - a.score);
+
+    // 3. Assign greedily
+    const newAssignments: Record<string, string> = { TOP: '', JUNGLE: '', MID: '', ADC: '', SUPPORT: '' };
+    const newFilters = { ...roleFilters };
+    const assignedPlayers = new Set<string>();
+    const assignedRoles = new Set<string>();
+
+    for (const cand of candidates) {
+      if (!assignedPlayers.has(cand.playerId) && !assignedRoles.has(cand.roleId)) {
+        newAssignments[cand.roleId] = cand.playerId;
+        newFilters[cand.roleId] = cand.filters;
+        
+        assignedPlayers.add(cand.playerId);
+        assignedRoles.add(cand.roleId);
+      }
+    }
+
+    // 4. Update State
+    setAssignments(newAssignments);
+    setRoleFilters(newFilters);
+    
+    // Expand all filters so the user can see WHY this score was chosen
+    const allExpanded: Record<string, boolean> = {};
+    ROLES.forEach(r => allExpanded[r.id] = true);
+    setExpandedFilters(allExpanded);
+  };
+
+  // --- COMPOSITION BUILDER LOGIC ---
+
+  const COMP_DEFINITIONS = {
+    ENGAGE: [
+      { name: 'Opción A (3 Engage, 2 Pick)', styles: ['ENGAGE', 'ENGAGE', 'ENGAGE', 'PICK', 'PICK'] },
+      { name: 'Opción B (3 Engage, 1 Protect, 1 Pick)', styles: ['ENGAGE', 'ENGAGE', 'ENGAGE', 'PROTECT', 'PICK'] }
+    ],
+    PICK: [
+      { name: 'Opción A (3 Pick, 2 Protect)', styles: ['PICK', 'PICK', 'PICK', 'PROTECT', 'PROTECT'] },
+      { name: 'Opción B (3 Pick, 2 Split)', styles: ['PICK', 'PICK', 'PICK', 'SPLIT', 'SPLIT'] },
+      { name: 'Opción C (3 Pick, 1 Split, 1 Protect)', styles: ['PICK', 'PICK', 'PICK', 'SPLIT', 'PROTECT'] }
+    ],
+    SIEGE: [
+      { name: 'Opción A (3 Siege, 2 Protect)', styles: ['SIEGE', 'SIEGE', 'SIEGE', 'PROTECT', 'PROTECT'] }
+    ],
+    SPLIT: [
+      { name: 'Opción A (2 Split, 3 Protect)', styles: ['SPLIT', 'SPLIT', 'PROTECT', 'PROTECT', 'PROTECT'] },
+      { name: 'Opción B (3 Split, 2 Protect)', styles: ['SPLIT', 'SPLIT', 'SPLIT', 'PROTECT', 'PROTECT'] },
+      { name: 'Opción C (2 Split, 1 Pick, 2 Protect)', styles: ['SPLIT', 'SPLIT', 'PICK', 'PROTECT', 'PROTECT'] }
+    ],
+    PROTECT: [
+      { name: 'Opción A (4 Protect, 1 Engage)', styles: ['PROTECT', 'PROTECT', 'PROTECT', 'PROTECT', 'ENGAGE'] },
+      { name: 'Opción B (3 Protect, 1 Pick, 1 Engage)', styles: ['PROTECT', 'PROTECT', 'PROTECT', 'PICK', 'ENGAGE'] }
+    ]
+  };
+
+  const getScoreForCompStyle = (playerId: string, roleId: string, compStyle: string) => {
+    // Helper to find max score for a player in a role given a "Composition Style"
+    // This handles the nuances (e.g. ADC Protect = Hypercarry)
+    
+    let targetDBStyles: string[] = [];
+
+    switch (compStyle) {
+      case 'ENGAGE':
+        targetDBStyles = ['ENGAGE'];
+        break;
+      case 'PICK':
+        targetDBStyles = ['PICKUP'];
+        break;
+      case 'SIEGE':
+        targetDBStyles = ['SIEGE'];
+        break;
+      case 'SPLIT':
+        targetDBStyles = ['SPLITPUSH'];
+        break;
+      case 'PROTECT':
+        targetDBStyles = ['PROTECT'];
+        break;
+      default:
+        targetDBStyles = ['ALL'];
+    }
+
+    let bestScore = -1;
+    let bestFilters: FilterState | null = null;
+
+    // Iterate all DB styles that map to this Comp Style
+    for (const dbStyle of targetDBStyles) {
+      // Also iterate Side/Allocation to find peak
+      const SIDES = ['ALL', 'BLUE', 'RED'];
+      const ALLOCATIONS = ['ALL', 'STRONG_SIDE', 'WEAK_SIDE', 'NEUTRAL', 'ROAMING'];
+
+      for (const side of SIDES) {
+        for (const alloc of ALLOCATIONS) {
+          const currentFilters = { side, allocation: alloc, style: dbStyle };
+          const stats = getPlayerRoleStats(playerId, roleId, currentFilters);
+          
+          if (stats && stats.score > bestScore) {
+            bestScore = stats.score;
+            bestFilters = currentFilters;
+          }
+        }
+      }
+    }
+
+    return { score: bestScore, filters: bestFilters };
+  };
+
+  const getTopChampions = (playerId: string, roleId: string, filters: FilterState) => {
+    if (!playerId) return [];
+    const player = players.find(p => p.id === playerId);
+    if (!player || !player.playerProfile) return [];
+
+    const matches = player.playerProfile.matchParticipations.filter(m => {
+      if (m.position !== roleId) return false;
+      if (filters.side !== 'ALL' && m.match?.ourSide !== filters.side) return false;
+      if (filters.allocation !== 'ALL' && m.laneAllocation !== filters.allocation) return false;
+      if (filters.style !== 'ALL' && m.championRole !== filters.style) return false;
+      return true;
+    });
+
+    const champStats: Record<string, { name: string, wins: number, games: number, kills: number, deaths: number, assists: number }> = {};
+
+    matches.forEach(m => {
+      const name = m.championName || 'Unknown';
+      if (!champStats[name]) {
+        champStats[name] = { name, wins: 0, games: 0, kills: 0, deaths: 0, assists: 0 };
+      }
+      champStats[name].games++;
+      if (m.match?.result === 'WIN') champStats[name].wins++;
+      champStats[name].kills += m.kills || 0;
+      champStats[name].deaths += m.deaths || 0;
+      champStats[name].assists += m.assists || 0;
+    });
+
+    return Object.values(champStats)
+      .sort((a, b) => {
+        // Sort by Games then Winrate
+        if (b.games !== a.games) return b.games - a.games;
+        return (b.wins / b.games) - (a.wins / a.games);
+      })
+      .slice(0, 3);
+  };
+
+  const buildComposition = (compType: keyof typeof COMP_DEFINITIONS) => {
+    const options = COMP_DEFINITIONS[compType];
+    let bestGlobalScore = -1;
+    let bestAssignment: any = null;
+    let bestFilters: any = null;
+
+    // 1. Iterate Options (A, B, C...)
+    for (const option of options) {
+      const requiredStyles = option.styles; // e.g. ['ENGAGE', 'ENGAGE', 'ENGAGE', 'PICK', 'PICK']
+      
+      // 2. Generate Permutations of Styles to Roles
+      // Roles are fixed order: TOP, JUNGLE, MID, ADC, SUPPORT
+      // We need to assign the 5 required styles to these 5 roles.
+      // Since N=5, we can generate unique permutations.
+      const uniquePermutations = getUniquePermutations(requiredStyles);
+
+      for (const stylePermutation of uniquePermutations) {
+        // stylePermutation is e.g. ['ENGAGE', 'PICK', 'ENGAGE', 'PICK', 'ENGAGE']
+        // corresponding to [TOP, JUNGLE, MID, ADC, SUPPORT]
+        
+        const currentAssignment: Record<string, string> = {};
+        const currentFilters: Record<string, FilterState> = { ...roleFilters };
+        const assignedPlayers = new Set<string>();
+        let currentTotalScore = 0;
+        let validPermutation = true;
+
+        // 3. Greedily assign best player for each Role+Style pair
+        // Note: A true optimal solution would be max flow or bipartite matching, 
+        // but greedy is okay if we sort roles by scarcity or just iterate.
+        // For simplicity, let's just iterate roles in order. 
+        // IMPROVEMENT: Sort roles by "difficulty to fill" or just try all player permutations (too expensive).
+        // Let's stick to: For each role, find best available player.
+        
+        // Actually, we need to ensure unique players.
+        // Let's collect ALL candidates for (Role, Style) and then pick best combination.
+        // Since 5 roles, 5 players, it's small.
+        
+        // Let's simplify: Just find the best player for each slot independently first.
+        // If conflict, we have a problem.
+        // Better: Backtracking or just simple greedy with "taken" set.
+        
+        const roleOrder = ['ADC', 'MID', 'TOP', 'JUNGLE', 'SUPPORT']; // Priority order?
+        
+        // Map permutation to roles
+        const roleStyles: Record<string, string> = {};
+        ROLES.forEach((r, i) => roleStyles[r.id] = stylePermutation[i]);
+
+        for (const roleId of roleOrder) {
+          const targetStyle = roleStyles[roleId];
+          let bestPlayerId = '';
+          let bestPlayerScore = -1;
+          let bestPlayerFilters = null;
+
+          for (const player of availablePlayers) {
+            if (assignedPlayers.has(player.id)) continue;
+
+            const result = getScoreForCompStyle(player.id, roleId, targetStyle);
+            if (result.score > bestPlayerScore) {
+              bestPlayerScore = result.score;
+              bestPlayerId = player.id;
+              bestPlayerFilters = result.filters;
+            }
+          }
+
+          if (bestPlayerId) {
+            currentAssignment[roleId] = bestPlayerId;
+            if (bestPlayerFilters) currentFilters[roleId] = bestPlayerFilters;
+            assignedPlayers.add(bestPlayerId);
+            currentTotalScore += bestPlayerScore;
+          } else {
+            validPermutation = false; // Couldn't fill a role
+            break;
+          }
+        }
+
+        if (validPermutation && currentTotalScore > bestGlobalScore) {
+          bestGlobalScore = currentTotalScore;
+          bestAssignment = currentAssignment;
+          bestFilters = currentFilters;
+        }
+      }
+    }
+
+    if (bestAssignment) {
+      setAssignments(bestAssignment);
+      setRoleFilters(bestFilters);
+      setIsCompModalOpen(false);
+      
+      // Expand filters
+      const allExpanded: Record<string, boolean> = {};
+      ROLES.forEach(r => allExpanded[r.id] = true);
+      setExpandedFilters(allExpanded);
+    } else {
+      alert('No se pudo armar una composición válida con los jugadores disponibles.');
+    }
+  };
+
+  // Helper for permutations
+  function getUniquePermutations(arr: string[]): string[][] {
+    if (arr.length === 0) return [[]];
+    const firstEl = arr[0];
+    const rest = arr.slice(1);
+    const permsWithoutFirst = getUniquePermutations(rest);
+    const allPermutations: string[][] = [];
+
+    permsWithoutFirst.forEach((perm) => {
+      for (let i = 0; i <= perm.length; i++) {
+        const permWithFirst = [...perm.slice(0, i), firstEl, ...perm.slice(i)];
+        allPermutations.push(permWithFirst);
+      }
+    });
+
+    // Remove duplicates
+    const uniqueStrings = new Set(allPermutations.map(p => JSON.stringify(p)));
+    return Array.from(uniqueStrings).map(s => JSON.parse(s));
+  }
+
   const teamOverall = useMemo(() => {
     let total = 0;
     let count = 0;
@@ -283,36 +618,62 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
         </div>
 
         {/* Team Header & Save */}
-        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold text-white">Alineación</h2>
-            <p className="text-xs text-slate-400">
-              {selectedLineupId ? 'Jugadores de la alineación seleccionada' : 'Todos los jugadores disponibles'}
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-xs text-slate-400 uppercase font-bold">Media OVR</div>
-              <div className={`text-3xl font-bold ${teamOverall >= 80 ? 'text-yellow-400' : teamOverall >= 60 ? 'text-blue-400' : 'text-slate-500'}`}>
+        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-xl font-bold text-white">Alineación</h2>
+              <p className="text-xs text-slate-400 max-w-[200px] leading-tight mt-1">
+                {selectedLineupId ? 'Jugadores de la alineación seleccionada' : 'Todos los jugadores disponibles'}
+              </p>
+            </div>
+            <div className="text-right bg-slate-950/50 px-3 py-2 rounded-lg border border-slate-800 min-w-[80px]">
+              <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Media</div>
+              <div className={`text-2xl font-bold ${teamOverall >= 80 ? 'text-yellow-400' : teamOverall >= 60 ? 'text-blue-400' : 'text-slate-500'}`}>
                 {teamOverall}
               </div>
             </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setIsLoadModalOpen(true)}
-                className="bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-lg transition-colors"
-                title="Cargar Configuración"
-              >
-                <FolderOpen size={20} />
-              </button>
-              <button 
-                onClick={() => setIsSaveModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg transition-colors"
-                title="Guardar Alineación"
-              >
-                <Save size={20} />
-              </button>
-            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button 
+              onClick={() => setIsCompModalOpen(true)}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-3 rounded-lg transition-colors shadow-lg shadow-indigo-500/20 flex justify-center items-center group relative"
+              title="Armar Composición (Engage, Pick, etc.)"
+            >
+              <Puzzle size={18} />
+              <span className="sr-only">Composición</span>
+            </button>
+            <button 
+              onClick={findPeakPerformanceLineup}
+              className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-white py-2 px-3 rounded-lg transition-colors shadow-lg shadow-yellow-500/20 flex justify-center items-center"
+              title="Encontrar Máximo Potencial (Ajusta Filtros)"
+            >
+              <Sparkles size={18} />
+            </button>
+            <button 
+              onClick={recommendLineup}
+              className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2 px-3 rounded-lg transition-colors flex justify-center items-center"
+              title="Recomendar Alineación (Filtros Actuales)"
+            >
+              <Wand2 size={18} />
+            </button>
+            
+            <div className="w-px bg-slate-700 mx-1"></div>
+            
+            <button 
+              onClick={() => setIsLoadModalOpen(true)}
+              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-3 rounded-lg transition-colors flex justify-center items-center"
+              title="Cargar Configuración"
+            >
+              <FolderOpen size={18} />
+            </button>
+            <button 
+              onClick={() => setIsSaveModalOpen(true)}
+              className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 px-3 rounded-lg transition-colors flex justify-center items-center"
+              title="Guardar Alineación"
+            >
+              <Save size={18} />
+            </button>
           </div>
         </div>
 
@@ -360,7 +721,7 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
                     value={filters.side}
                     onChange={(e) => updateRoleFilter(role.id, 'side', e.target.value)}
                   >
-                    <option value="ALL">Lado (Todos)</option>
+                    <option value="ALL">Lado (Todo)</option>
                     <option value="BLUE">Blue</option>
                     <option value="RED">Red</option>
                   </select>
@@ -369,7 +730,7 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
                     value={filters.allocation}
                     onChange={(e) => updateRoleFilter(role.id, 'allocation', e.target.value)}
                   >
-                    <option value="ALL">Recursos</option>
+                    <option value="ALL">Linea(Todo)</option>
                     <option value="STRONG_SIDE">Strong</option>
                     <option value="WEAK_SIDE">Weak</option>
                     <option value="NEUTRAL">Neutral</option>
@@ -380,7 +741,7 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
                     value={filters.style}
                     onChange={(e) => updateRoleFilter(role.id, 'style', e.target.value)}
                   >
-                    <option value="ALL">Estilo</option>
+                    <option value="ALL">Comp.(Todo)</option>
                     <option value="ENGAGE">Engage</option>
                     <option value="PROTECT">Protect</option>
                     <option value="SIEGE">Siege</option>
@@ -427,6 +788,32 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
                   </div>
                 )}
               </div>
+
+              {/* Recommended Champions */}
+              {assignedId && (
+                <div className="mt-2 flex gap-2 justify-center">
+                  {getTopChampions(assignedId, role.id, filters).map((champ, idx) => (
+                    <div key={idx} className="group relative">
+                      <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden cursor-help">
+                        {/* Placeholder for Champion Icon - using first letter if no image */}
+                        <span className="text-xs font-bold text-slate-400">{champ.name.substring(0, 2)}</span>
+                      </div>
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 border border-slate-700 p-2 rounded shadow-xl z-50 w-32 text-center">
+                        <div className="font-bold text-white text-xs mb-1">{champ.name}</div>
+                        <div className="text-[10px] text-slate-400">
+                          <span className="text-green-400">{Math.round((champ.wins / champ.games) * 100)}% WR</span>
+                          <span className="mx-1">•</span>
+                          <span>{champ.games} G</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-1">
+                          KDA: {((champ.kills + champ.assists) / Math.max(1, champ.deaths)).toFixed(1)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -456,10 +843,59 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
               >
                 {/* Icon Circle */}
                 <div className={`
-                  w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-xl z-10 transition-transform duration-200 group-hover:scale-110
+                  w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-xl z-10 transition-transform duration-200 group-hover:scale-110 relative
                   ${assignedId ? 'bg-slate-800 border-blue-500' : 'bg-slate-900/80 border-slate-700'}
                 `}>
                   <role.icon size={20} className={assignedId ? role.color : 'text-slate-500'} />
+                  
+                  {/* Allocation Badge */}
+                  {roleFilters[role.id].allocation === 'STRONG_SIDE' && (
+                    <div className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 border border-slate-900 shadow-sm" title="Strong Side">
+                      <Flame size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+                  {roleFilters[role.id].allocation === 'WEAK_SIDE' && (
+                    <div className="absolute -top-2 -right-2 bg-blue-500 rounded-full p-1 border border-slate-900 shadow-sm" title="Weak Side">
+                      <Shield size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+                  {roleFilters[role.id].allocation === 'ROAMING' && (
+                    <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1 border border-slate-900 shadow-sm" title="Roaming">
+                      <Footprints size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+                  {roleFilters[role.id].allocation === 'NEUTRAL' && (
+                    <div className="absolute -top-2 -right-2 bg-slate-500 rounded-full p-1 border border-slate-900 shadow-sm" title="Neutral">
+                      <Target size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+
+                  {/* Comp Style Badge (Bottom Right - 4 o'clock) */}
+                  {roleFilters[role.id].style === 'ENGAGE' && (
+                    <div className="absolute bottom-0 -right-2 bg-orange-600 rounded-full p-1 border border-slate-900 shadow-sm" title="Engage">
+                      <Sword size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+                  {roleFilters[role.id].style === 'PICKUP' && (
+                    <div className="absolute bottom-0 -right-2 bg-purple-600 rounded-full p-1 border border-slate-900 shadow-sm" title="Pick Up">
+                      <Crosshair size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+                  {roleFilters[role.id].style === 'SIEGE' && (
+                    <div className="absolute bottom-0 -right-2 bg-yellow-600 rounded-full p-1 border border-slate-900 shadow-sm" title="Siege">
+                      <Zap size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+                  {roleFilters[role.id].style === 'SPLITPUSH' && (
+                    <div className="absolute bottom-0 -right-2 bg-teal-600 rounded-full p-1 border border-slate-900 shadow-sm" title="Split Push">
+                      <Map size={10} className="text-white fill-current" />
+                    </div>
+                  )}
+                  {roleFilters[role.id].style === 'PROTECT' && (
+                    <div className="absolute bottom-0 -right-2 bg-pink-600 rounded-full p-1 border border-slate-900 shadow-sm" title="Protect">
+                      <Heart size={10} className="text-white fill-current" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Player Card on Map */}
@@ -482,6 +918,87 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
           })}
         </div>
       </div>
+
+      {/* Comp Builder Modal */}
+      {isCompModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-slate-800">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Puzzle className="text-indigo-500" />
+                Armar Composición
+              </h2>
+              <p className="text-sm text-slate-400 mt-1">
+                Selecciona un estilo de juego y el sistema encontrará la mejor alineación balanceada.
+              </p>
+            </div>
+            <div className="p-6 grid grid-cols-1 gap-3">
+              <button 
+                onClick={() => buildComposition('ENGAGE')}
+                className="flex items-center justify-between p-4 bg-slate-800 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-700 rounded-lg transition-all group"
+              >
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-indigo-400">Engage / Teamfight</div>
+                  <div className="text-xs text-slate-400">Iniciación dura y peleas grupales.</div>
+                </div>
+                <Sword size={20} className="text-slate-500 group-hover:text-indigo-400" />
+              </button>
+
+              <button 
+                onClick={() => buildComposition('PICK')}
+                className="flex items-center justify-between p-4 bg-slate-800 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-700 rounded-lg transition-all group"
+              >
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-indigo-400">Pick Up / Catch</div>
+                  <div className="text-xs text-slate-400">Cazar enemigos aislados y burst.</div>
+                </div>
+                <Crosshair size={20} className="text-slate-500 group-hover:text-indigo-400" />
+              </button>
+
+              <button 
+                onClick={() => buildComposition('SIEGE')}
+                className="flex items-center justify-between p-4 bg-slate-800 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-700 rounded-lg transition-all group"
+              >
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-indigo-400">Siege / Poke</div>
+                  <div className="text-xs text-slate-400">Desgaste a distancia y control de zona.</div>
+                </div>
+                <Zap size={20} className="text-slate-500 group-hover:text-indigo-400" />
+              </button>
+
+              <button 
+                onClick={() => buildComposition('SPLIT')}
+                className="flex items-center justify-between p-4 bg-slate-800 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-700 rounded-lg transition-all group"
+              >
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-indigo-400">Split Push / 1-3-1</div>
+                  <div className="text-xs text-slate-400">Presión dividida en líneas laterales.</div>
+                </div>
+                <Map size={20} className="text-slate-500 group-hover:text-indigo-400" />
+              </button>
+
+              <button 
+                onClick={() => buildComposition('PROTECT')}
+                className="flex items-center justify-between p-4 bg-slate-800 hover:bg-indigo-600/20 hover:border-indigo-500 border border-slate-700 rounded-lg transition-all group"
+              >
+                <div className="text-left">
+                  <div className="font-bold text-white group-hover:text-indigo-400">Protect the Carry</div>
+                  <div className="text-xs text-slate-400">Jugar alrededor de un Hyper Carry.</div>
+                </div>
+                <Shield size={20} className="text-slate-500 group-hover:text-indigo-400" />
+              </button>
+            </div>
+            <div className="p-4 border-t border-slate-800 flex justify-end">
+              <button 
+                onClick={() => setIsCompModalOpen(false)}
+                className="text-slate-400 hover:text-white px-4 py-2"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Save Modal */}
       {isSaveModalOpen && (

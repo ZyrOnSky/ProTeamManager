@@ -148,15 +148,28 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500">
+      <div className="min-h-screen flex items-center justify-center text-slate-500">
         <Loader2 className="animate-spin" size={32} />
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <div className="max-w-2xl mx-auto">
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 p-8 overflow-hidden">
+      {/* 🎥 VIDEO BACKGROUND */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="w-full h-full object-cover opacity-50"
+        >
+          <source src="/videos/9-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div className="relative z-10 max-w-2xl mx-auto">
         <header className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <Link 
@@ -170,7 +183,7 @@ export default function SettingsPage() {
           <p className="text-slate-400 ml-14">Personaliza tu experiencia en la plataforma.</p>
         </header>
 
-        <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-8">
+        <form onSubmit={handleSubmit} className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 space-y-8 shadow-lg">
           
           {/* Zona Horaria */}
           <div className="space-y-4">
@@ -182,7 +195,7 @@ export default function SettingsPage() {
               Define la zona horaria para visualizar correctamente los horarios de las scrims.
             </p>
             <select
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
               value={settings.timezone}
               onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
             >
@@ -211,21 +224,21 @@ export default function SettingsPage() {
               <input
                 type="password"
                 placeholder="Contraseña Actual"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
                 value={passwordForm.currentPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
               />
               <input
                 type="password"
                 placeholder="Nueva Contraseña"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
                 value={passwordForm.newPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
               />
               <input
                 type="password"
                 placeholder="Confirmar Nueva Contraseña"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors"
                 value={passwordForm.confirmPassword}
                 onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
               />
@@ -233,7 +246,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handlePasswordChange}
                 disabled={isChangingPassword}
-                className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/50 py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2"
+                className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/50 py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2 shadow-md"
               >
                 {isChangingPassword ? (
                   <>
@@ -264,7 +277,7 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <label className="text-sm text-slate-400">Seleccionar Usuario</label>
                     <select
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                       value={selectedUser}
                       onChange={(e) => setSelectedUser(e.target.value)}
                     >
@@ -282,7 +295,7 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       placeholder="Ingresa la nueva contraseña"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                       value={adminNewPassword}
                       onChange={(e) => setAdminNewPassword(e.target.value)}
                     />
@@ -292,7 +305,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={handleAdminResetPassword}
                     disabled={isAdminResetting || !selectedUser || !adminNewPassword}
-                    className="w-full bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-600/50 py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-600/50 py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                   >
                     {isAdminResetting ? (
                       <>
@@ -315,7 +328,7 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2 shadow-md"
             >
               {isSaving ? (
                 <>

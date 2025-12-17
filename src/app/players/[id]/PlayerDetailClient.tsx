@@ -641,7 +641,7 @@ export function PlayerDetailClient({
             {/* Left Column: Quick Stats & Recent Activity */}
             <div className="lg:col-span-2 space-y-6">
               {/* Season Summary Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-bold mb-4 text-slate-200 flex items-center gap-2">
                   <Trophy size={20} className="text-yellow-500" />
                   Resumen de Temporada
@@ -734,7 +734,7 @@ export function PlayerDetailClient({
               </div>
 
               {/* Recent Matches List (Simplified) */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-bold mb-4 text-slate-200">Partidas Recientes</h3>
                 {matches.length === 0 ? (
                   <div className="text-center py-8 text-slate-500">No hay partidas registradas.</div>
@@ -768,7 +768,7 @@ export function PlayerDetailClient({
             {/* Right Column: Recent Eval & Pool Preview */}
             <div className="space-y-6">
               {/* Latest Evaluation */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-bold mb-4 text-slate-200">Última Evaluación</h3>
                 {evaluations.length > 0 ? (
                   <div className="space-y-4">
@@ -817,7 +817,7 @@ export function PlayerDetailClient({
               </div>
 
               {/* Attendance Summary */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-lg font-bold text-slate-200">Asistencia</h3>
                   <div className={`text-2xl font-bold ${attendanceRate >= 80 ? 'text-green-400' : attendanceRate >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
@@ -864,13 +864,13 @@ export function PlayerDetailClient({
         )}
 
         {activeTab === "INFO" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-2xl">
+          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 max-w-2xl shadow-lg">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold text-slate-200">Información Personal</h3>
               {canEdit && !isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 text-sm bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-2 text-sm bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg transition-colors shadow-md"
                 >
                   <Pencil size={16} />
                   Editar
@@ -1058,7 +1058,7 @@ export function PlayerDetailClient({
                 {(canEdit || player.id === currentUserId) && (
                   <button
                     onClick={() => router.push(`/players/${player.id}/matches/new`)}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md"
                   >
                     <Swords size={18} />
                     Registrar Partida SoloQ
@@ -1067,7 +1067,7 @@ export function PlayerDetailClient({
               </div>
 
               {/* Filters Toolbar */}
-              <div className="flex flex-wrap items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800">
+              <div className="flex flex-wrap items-center gap-4 bg-slate-900/80 backdrop-blur-sm p-4 rounded-xl border border-slate-800 shadow-lg">
                 <div className="flex items-center gap-2">
                   <Filter size={16} className="text-slate-400" />
                   <span className="text-sm font-medium text-slate-300">Filtros:</span>
@@ -1110,7 +1110,7 @@ export function PlayerDetailClient({
             </div>
 
             {filteredMatches.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
+              <div className="text-center py-12 text-slate-500 bg-slate-900/80 backdrop-blur-sm rounded-xl border border-dashed border-slate-800 shadow-lg">
                 No hay partidas que coincidan con los filtros.
               </div>
             ) : (
@@ -1118,11 +1118,11 @@ export function PlayerDetailClient({
                 {currentMatches.map((m: any) => {
                   const result = m.match.result;
                   const isWin = result === 'WIN';
-                  const resultColor = isWin ? 'border-green-500/50 bg-green-500/5' : result === 'LOSS' ? 'border-red-500/50 bg-red-500/5' : 'border-slate-800 bg-slate-900';
+                  const resultColor = isWin ? 'border-green-500/50 bg-green-500/10' : result === 'LOSS' ? 'border-red-500/50 bg-red-500/10' : 'border-slate-800 bg-slate-900/80';
                   const textColor = isWin ? 'text-green-400' : result === 'LOSS' ? 'text-red-400' : 'text-slate-400';
                   
                   return (
-                    <div key={m.id} className={`flex items-center justify-between p-4 rounded-xl border ${resultColor} transition-all hover:bg-slate-800/50`}>
+                    <div key={m.id} className={`flex items-center justify-between p-4 rounded-xl border backdrop-blur-sm shadow-md ${resultColor} transition-all hover:scale-[1.01]`}>
                       <div className="flex items-center gap-6">
                         <div className={`p-3 rounded-lg ${isWin ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                           <Swords size={24} />
@@ -1204,7 +1204,7 @@ export function PlayerDetailClient({
             {/* Row 1: Radar, Role & Allocation Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Radar Chart */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-bold mb-4 text-slate-200 flex items-center gap-2">
                   <Target size={20} className="text-purple-400" />
                   Evaluación (Radar)
@@ -1237,7 +1237,7 @@ export function PlayerDetailClient({
               </div>
 
               {/* Role Winrate Chart */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-bold mb-4 text-slate-200 flex items-center gap-2">
                   <Swords size={20} className="text-red-400" />
                   Winrate por Rol
@@ -1263,7 +1263,7 @@ export function PlayerDetailClient({
               </div>
 
               {/* Lane Allocation Chart */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <h3 className="text-lg font-bold mb-4 text-slate-200 flex items-center gap-2">
                   <Activity size={20} className="text-orange-400" />
                   Winrate por Recursos
@@ -1290,7 +1290,7 @@ export function PlayerDetailClient({
             </div>
 
             {/* Row 2: Trends */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold mb-4 text-slate-200 flex items-center gap-2">
                 <Activity size={20} className="text-green-400" />
                 Tendencias Recientes (Últimas 20 Partidas)
@@ -1332,7 +1332,7 @@ export function PlayerDetailClient({
             </div>
 
             {/* Row 3: Historical Progress (FIFA Ratings) */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold mb-4 text-slate-200 flex items-center gap-2">
                 <Trophy size={20} className="text-yellow-500" />
                 Progreso Histórico (Valor del Jugador)
@@ -1385,7 +1385,7 @@ export function PlayerDetailClient({
             </div>
 
             {/* Row 4: Champion Stats */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-bold mb-4 text-slate-200 flex items-center gap-2">
                 <Trophy size={20} className="text-yellow-500" />
                 Estadísticas por Campeón
@@ -1466,7 +1466,7 @@ export function PlayerDetailClient({
                     });
                     setIsAddingEval(true);
                   }}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md"
                 >
                   <Plus size={18} />
                   Nueva Evaluación
@@ -1475,7 +1475,7 @@ export function PlayerDetailClient({
             </div>
 
             {isAddingEval && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl p-6 shadow-lg">
                 <h4 className="text-lg font-bold text-slate-200 mb-4">
                   {editingEval ? "Editar Evaluación" : "Nueva Evaluación"}
                 </h4>
@@ -1575,13 +1575,13 @@ export function PlayerDetailClient({
             {/* Evaluations List */}
             <div className="space-y-4">
               {evaluationsList.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 bg-slate-900 rounded-xl border border-dashed border-slate-800">
+                <div className="text-center py-12 text-slate-500 bg-slate-900/80 backdrop-blur-sm rounded-xl border border-dashed border-slate-800 shadow-lg">
                   No hay evaluaciones registradas.
                 </div>
               ) : (
                 evaluationsList.map((ev: any) => (
-                  <div key={ev.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                    <div className="p-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                  <div key={ev.id} className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+                    <div className="p-4 bg-slate-950/50 border-b border-slate-800 flex justify-between items-center">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
                           <User size={20} />

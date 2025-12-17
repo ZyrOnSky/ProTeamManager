@@ -54,7 +54,7 @@ export function AddPlayerForm() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-md p-6 shadow-2xl">
+      <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl w-full max-w-md p-6 shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white">Nuevo Jugador</h2>
           <button

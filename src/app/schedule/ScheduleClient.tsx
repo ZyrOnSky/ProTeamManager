@@ -225,11 +225,11 @@ export default function ScheduleClient() {
 
         days.push(
           <div
-            className={`min-h-[120px] p-2 border border-slate-800 relative transition-colors hover:bg-slate-900/50 cursor-pointer ${
+            className={`min-h-[120px] p-2 border border-slate-800 relative transition-colors hover:bg-slate-900/70 cursor-pointer ${
               !isSameMonth(day, monthStart)
-                ? "text-slate-600 bg-slate-950/30"
-                : "text-slate-300 bg-slate-900"
-            } ${isSameDay(day, new Date()) ? "bg-blue-900/10 border-blue-500/30" : ""}`}
+                ? "text-slate-600 bg-slate-950/40"
+                : "text-slate-300 bg-slate-900/60 backdrop-blur-sm"
+            } ${isSameDay(day, new Date()) ? "bg-blue-900/20 border-blue-500/30" : ""}`}
             key={day.toString()}
             onClick={() => handleDateClick(cloneDay)}
           >
@@ -272,48 +272,66 @@ export default function ScheduleClient() {
   };
 
   const renderWeekView = () => {
-    // Simplified week view implementation
-    // Similar to month view but with time slots or just columns
-    // For now, let's reuse the grid logic but just for one week
     const start = startOfWeek(currentDate, { weekStartsOn: 1 });
     const end = endOfWeek(currentDate, { weekStartsOn: 1 });
     const days = eachDayOfInterval({ start, end });
 
     return (
-      <div className="grid grid-cols-7 gap-px bg-slate-800 border border-slate-800 rounded-lg overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-4 md:gap-px bg-transparent md:bg-slate-800/50 md:border md:border-slate-800 md:rounded-lg md:overflow-hidden">
         {days.map((day) => {
           const dayEvents = events.filter(e => isSameDay(getShiftedDate(e.startTime), day));
+          const isToday = isSameDay(day, new Date());
+          
           return (
             <div 
               key={day.toString()} 
-              className={`min-h-[400px] bg-slate-900 p-2 cursor-pointer hover:bg-slate-900/80 ${
-                isSameDay(day, new Date()) ? "bg-blue-900/10" : ""
-              }`}
+              className={`
+                min-h-[100px] md:min-h-[500px] p-4 md:p-2 
+                rounded-xl md:rounded-none
+                border md:border-none border-slate-800
+                transition-colors cursor-pointer backdrop-blur-sm
+                ${isToday 
+                  ? "bg-slate-900/60 ring-1 ring-blue-500/50" 
+                  : "bg-slate-900/60 hover:bg-slate-900/80"
+                }
+              `}
               onClick={() => handleDateClick(day)}
             >
-              <div className="text-center mb-4 py-2 border-b border-slate-800">
-                <div className="text-sm text-slate-400">{format(day, "EEE", { locale: es })}</div>
-                <div className={`text-lg font-bold ${isSameDay(day, new Date()) ? "text-blue-400" : ""}`}>
-                  {format(day, "d")}
+              <div className={`flex md:block justify-between items-center md:text-center mb-3 pb-2 border-b border-slate-800/50 ${
+                 isToday ? "text-blue-400" : "text-slate-400"
+              }`}>
+                <div className="flex items-center gap-2 md:block">
+                    <span className="text-sm md:text-xs uppercase font-bold">{format(day, "EEEE", { locale: es })}</span>
+                    <span className="md:hidden text-slate-600">•</span>
+                    <span className="text-lg md:text-xl font-bold">{format(day, "d")}</span>
+                </div>
+                <div className="md:hidden text-xs text-slate-500">
+                    {dayEvents.length > 0 ? `${dayEvents.length} eventos` : 'Sin eventos'}
                 </div>
               </div>
+
               <div className="space-y-2">
                 {dayEvents.map((event) => (
                   <div
                     key={event.id}
                     onClick={(e) => handleEventClick(event, e)}
-                    className={`text-xs p-2 rounded border ${getEventColor(event.type)}`}
+                    className={`text-xs p-3 md:p-2 rounded-lg border shadow-sm hover:scale-[1.02] transition-transform ${getEventColor(event.type)}`}
                   >
-                    <div className="font-bold mb-1">{event.title}</div>
-                    <div className="flex items-center gap-1 opacity-75 mb-1">
-                      <Clock size={10} />
+                    <div className="font-bold mb-1 line-clamp-1">{event.title}</div>
+                    <div className="flex items-center gap-1 opacity-75">
+                      <Clock size={12} />
                       {format(getShiftedDate(event.startTime), "HH:mm")}
+                      {event.opponentName && (
+                        <span className="truncate ml-1">- vs {event.opponentName}</span>
+                      )}
                     </div>
-                    {event.opponentName && (
-                      <div className="truncate opacity-75">vs {event.opponentName}</div>
-                    )}
                   </div>
                 ))}
+                {dayEvents.length === 0 && (
+                    <div className="hidden md:block text-center text-slate-600 text-xs py-8 italic">
+                        Sin actividad
+                    </div>
+                )}
               </div>
             </div>
           );
@@ -325,121 +343,130 @@ export default function ScheduleClient() {
   return (
     <div className="space-y-6">
       {/* Header Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800">
-        <div className="flex items-center gap-4">
-          <select
-            value={selectedLineupId}
-            onChange={(e) => setSelectedLineupId(e.target.value)}
-            className="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500"
-          >
-            {lineups.map((lineup) => (
-              <option key={lineup.id} value={lineup.id}>
-                {lineup.name}
-              </option>
-            ))}
-          </select>
-          
-          <div className="flex items-center bg-slate-950 rounded-lg border border-slate-700 p-1">
-            <button
-              onClick={() => setView("month")}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                view === "month" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
-              }`}
+      <div className="bg-slate-900/80 backdrop-blur-sm p-4 rounded-xl border border-slate-800 space-y-4">
+        
+        {/* Top Controls: Lineup & View */}
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+            <select
+                value={selectedLineupId}
+                onChange={(e) => setSelectedLineupId(e.target.value)}
+                className="w-full md:w-auto bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500"
             >
-              Mes
-            </button>
-            <button
-              onClick={() => setView("week")}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                view === "week" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Semana
-            </button>
-          </div>
-
-          {/* Schedule Link */}
-          <div className="relative">
-            {editingLink ? (
-              <div className="flex items-center gap-2 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1">
-                <input
-                  type="text"
-                  value={scheduleLink}
-                  onChange={(e) => setScheduleLink(e.target.value)}
-                  placeholder="Link de Drive..."
-                  className="bg-transparent border-none focus:outline-none text-sm w-40"
-                />
-                <button onClick={saveScheduleLink} className="text-green-500 hover:text-green-400">
-                  <CheckCircle size={16} />
-                </button>
-                <button onClick={() => setEditingLink(false)} className="text-red-500 hover:text-red-400">
-                  <XCircle size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                {scheduleLink ? (
-                  <a
-                    href={scheduleLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
-                  >
-                    <LinkIcon size={16} />
-                    Ver Horario
-                  </a>
-                ) : (
-                  <span className="text-slate-500 text-sm px-3 py-2">Sin horario</span>
-                )}
+                {lineups.map((lineup) => (
+                <option key={lineup.id} value={lineup.id}>
+                    {lineup.name}
+                </option>
+                ))}
+            </select>
+            
+            <div className="flex items-center bg-slate-950 rounded-lg border border-slate-700 p-1 w-full md:w-auto">
                 <button
-                  onClick={() => setEditingLink(true)}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                onClick={() => setView("month")}
+                className={`flex-1 md:flex-none px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    view === "month" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                }`}
                 >
-                  <Edit2 size={16} />
+                Mes
                 </button>
-              </div>
-            )}
-          </div>
+                <button
+                onClick={() => setView("week")}
+                className={`flex-1 md:flex-none px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    view === "week" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                }`}
+                >
+                Semana
+                </button>
+            </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+        {/* Middle Controls: Date Navigation */}
+        <div className="flex items-center justify-between bg-slate-950/50 rounded-lg p-2 border border-slate-800/50">
             <button onClick={handlePrev} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white">
               <ChevronLeft size={20} />
             </button>
-            <h2 className="text-xl font-bold min-w-[200px] text-center capitalize">
-              {format(currentDate, "MMMM yyyy", { locale: es })}
-            </h2>
+            
+            <div className="flex flex-col items-center">
+                <h2 className="text-lg font-bold capitalize text-center">
+                    {format(currentDate, "MMMM yyyy", { locale: es })}
+                </h2>
+                <button onClick={handleToday} className="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                    Volver a Hoy
+                </button>
+            </div>
+
             <button onClick={handleNext} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white">
               <ChevronRight size={20} />
             </button>
-          </div>
-          <button onClick={handleToday} className="text-sm text-blue-400 hover:text-blue-300 font-medium">
-            Hoy
-          </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowStatsModal(true)}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium border border-slate-700"
-            title="Ver Estadísticas"
-          >
-            <BarChart2 size={16} />
-            <span className="hidden md:inline">Estadísticas</span>
-          </button>
+        {/* Bottom Controls: Actions & Link */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            {/* Schedule Link */}
+            <div className="w-full md:w-auto flex justify-center md:justify-start">
+                {editingLink ? (
+                <div className="flex items-center gap-2 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 w-full md:w-auto">
+                    <input
+                    type="text"
+                    value={scheduleLink}
+                    onChange={(e) => setScheduleLink(e.target.value)}
+                    placeholder="Link de Drive..."
+                    className="bg-transparent border-none focus:outline-none text-sm w-full md:w-40"
+                    />
+                    <button onClick={saveScheduleLink} className="text-green-500 hover:text-green-400">
+                    <CheckCircle size={16} />
+                    </button>
+                    <button onClick={() => setEditingLink(false)} className="text-red-500 hover:text-red-400">
+                    <XCircle size={16} />
+                    </button>
+                </div>
+                ) : (
+                <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-start">
+                    {scheduleLink ? (
+                    <a
+                        href={scheduleLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+                    >
+                        <LinkIcon size={16} />
+                        Ver Horario
+                    </a>
+                    ) : (
+                    <span className="text-slate-500 text-sm px-3 py-2">Sin horario</span>
+                    )}
+                    <button
+                    onClick={() => setEditingLink(true)}
+                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                    <Edit2 size={16} />
+                    </button>
+                </div>
+                )}
+            </div>
 
-          <button
-            onClick={() => {
-              setSelectedEvent(null);
-              setSelectedDate(new Date());
-              setShowEventModal(true);
-            }}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-          >
-            <Plus size={16} />
-            <span className="hidden md:inline">Nuevo Evento</span>
-          </button>
+            {/* Action Buttons */}
+            <div className="flex gap-2 w-full md:w-auto">
+                <button
+                    onClick={() => setShowStatsModal(true)}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium border border-slate-700"
+                    title="Ver Estadísticas"
+                >
+                    <BarChart2 size={16} />
+                    <span className="md:hidden lg:inline">Estadísticas</span>
+                </button>
+
+                <button
+                    onClick={() => {
+                    setSelectedEvent(null);
+                    setSelectedDate(new Date());
+                    setShowEventModal(true);
+                    }}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                >
+                    <Plus size={16} />
+                    <span>Nuevo Evento</span>
+                </button>
+            </div>
         </div>
       </div>
 
@@ -462,7 +489,7 @@ export default function ScheduleClient() {
       {/* Event Modal Placeholder */}
       {showEventModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-xl border border-slate-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold">

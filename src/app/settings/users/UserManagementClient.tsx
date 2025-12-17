@@ -46,7 +46,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
       <div className="flex justify-end">
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-colors"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-colors shadow-md"
         >
           <Plus size={20} />
           Nuevo Usuario
@@ -55,8 +55,8 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
 
       {/* Create Modal */}
       {isCreating && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white">Crear Nuevo Usuario</h2>
               <button onClick={() => setIsCreating(false)} className="text-slate-400 hover:text-white">
@@ -71,7 +71,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
                   <input
                     type="text"
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
@@ -80,7 +80,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
                   <label className="block text-sm font-medium text-slate-400 mb-1">Nombre Real</label>
                   <input
                     type="text"
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                     value={formData.realName}
                     onChange={(e) => setFormData({ ...formData, realName: e.target.value })}
                   />
@@ -91,7 +91,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
                 <label className="block text-sm font-medium text-slate-400 mb-1">Nacionalidad (Ej: MX, AR)</label>
                 <input
                   type="text"
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                   value={formData.nationality}
                   onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
                   placeholder="Código de país (2 letras)"
@@ -104,7 +104,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
                 <input
                   type="email"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -114,7 +114,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
                 <input
                   type="password"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
@@ -122,7 +122,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Rol</label>
                 <select
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 >
@@ -137,7 +137,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
                 <div>
                   <label className="block text-sm font-medium text-slate-400 mb-1">Posición Principal</label>
                   <select
-                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                    className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                     value={formData.position}
                     onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                   >
@@ -153,7 +153,7 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-1">Asignar a Equipo (Opcional)</label>
                 <select
-                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
+                  className="w-full bg-slate-950/50 border border-slate-800 rounded px-3 py-2 text-white focus:border-blue-500 outline-none"
                   value={formData.lineupId}
                   onChange={(e) => setFormData({ ...formData, lineupId: e.target.value })}
                 >
@@ -176,9 +176,9 @@ export function UserManagementClient({ users, lineups }: UserManagementClientPro
       )}
 
       {/* Users List */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl overflow-hidden shadow-lg">
         <table className="w-full text-left text-sm text-slate-400">
-          <thead className="bg-slate-950 text-slate-200 uppercase font-bold">
+          <thead className="bg-slate-950/50 text-slate-200 uppercase font-bold">
             <tr>
               <th className="px-6 py-4">Nombre</th>
               <th className="px-6 py-4">Rol</th>
