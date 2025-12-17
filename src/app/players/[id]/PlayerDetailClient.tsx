@@ -641,7 +641,14 @@ export function PlayerDetailClient({
                         {/* Rating & Pos */}
                         <div className="absolute top-4 left-4 flex flex-col items-center">
                             <span className={`text-3xl font-bold leading-none ${cardTextClass}`}>{overallRating}</span>
-                            <span className={`text-sm font-bold uppercase ${cardTextClass}`}>{profile?.position || "N/A"}</span>
+                            <span className={`text-sm font-bold uppercase ${cardTextClass}`}>
+                              {(() => {
+                                const pos = profile?.position || "N/A";
+                                if (pos === "JUNGLE") return "JGL";
+                                if (pos === "SUPPORT") return "SUP";
+                                return pos;
+                              })()}
+                            </span>
                             {player.nationality && (
                               <span className={`text-xs font-bold uppercase mt-1 opacity-80 ${cardTextClass}`}>{player.nationality}</span>
                             )}

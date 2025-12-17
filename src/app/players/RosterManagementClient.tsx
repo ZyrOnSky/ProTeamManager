@@ -17,6 +17,15 @@ const RoleIcons: Record<string, any> = {
   SUPPORT: Heart,
 };
 
+const RoleAbbreviations: Record<string, string> = {
+  TOP: "TOP",
+  JUNGLE: "JGL",
+  MID: "MID",
+  ADC: "ADC",
+  SUPPORT: "SUP",
+  FILL: "FILL"
+};
+
 interface RosterManagementClientProps {
   players: any[];
   staff: any[];
@@ -260,7 +269,7 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
                 <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
                     <div className="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded border border-slate-800">
                         <Icon size={12} className={scoreColor} />
-                        <span className="font-bold">{position}</span>
+                        <span className="font-bold">{RoleAbbreviations[position] || position}</span>
                     </div>
                     {lineupName && (
                         <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20 truncate max-w-[120px]">
