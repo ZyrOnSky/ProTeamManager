@@ -153,6 +153,7 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
     let totalDeaths = 0;
     let totalAssists = 0;
     let totalCS = 0;
+    let totalTargetCS = 0;
     let totalWards = 0;
     let totalMinutes = 0;
     let wins = 0;
@@ -168,18 +169,29 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
       totalMinutes += durationMin;
 
       if (m.match?.result === 'WIN') wins++;
+
+      // Calculate Target CS based on Role
+      let targetCSPerMin = 10.0;
+      const role = m.position || "MID"; // Default if unknown
+      
+      if (role === "JUNGLE") targetCSPerMin = 8.0;
+      else if (role === "SUPPORT") targetCSPerMin = 2.0;
+      
+      totalTargetCS += (durationMin * targetCSPerMin);
     });
 
     // 3. Calculate Metrics
     const winRate = (wins / totalMatches) * 100;
     const kda = totalDeaths > 0 ? (totalKills + totalAssists) / totalDeaths : (totalKills + totalAssists);
-    const csPerMin = totalMinutes > 0 ? totalCS / totalMinutes : 0;
     const wardsPerMin = totalMinutes > 0 ? totalWards / totalMinutes : 0;
 
     // 4. Apply FIFA Card Formula (0-10 Scale per stat)
     const wrScore = Math.min(10, (winRate / 70) * 10);
     const kdaScore = Math.min(10, (kda / 5.0) * 10);
-    const csScore = Math.min(10, (csPerMin / 10.0) * 10);
+    
+    // CS Score based on Target CS
+    const csScore = totalTargetCS > 0 ? Math.min(10, (totalCS / totalTargetCS) * 10) : 0;
+    
     const visScore = Math.min(10, (wardsPerMin / 0.60) * 10);
 
     // Total Stats Score (0-100)

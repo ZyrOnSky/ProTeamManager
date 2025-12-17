@@ -271,7 +271,20 @@ export function PlayerDetailClient({
   const kdaValue = kdaRatio === "Perfect" ? 10 : parseFloat(kdaRatio);
   const kdaScore = Math.min(10, (kdaValue / 5.0) * 10);
   
-  const csScore = Math.min(10, (parseFloat(avgCSPerMin) / 10.0) * 10);
+  // Calculate Weighted CS Score
+  let totalTargetCS = 0;
+  filteredMatches.forEach((m: any) => {
+    const duration = m.match.duration ? m.match.duration / 60 : 30;
+    let targetCSPerMin = 10.0;
+    const role = m.position || profile?.position || "MID";
+    
+    if (role === "JUNGLE") targetCSPerMin = 8.0;
+    else if (role === "SUPPORT") targetCSPerMin = 2.0;
+    
+    totalTargetCS += (duration * targetCSPerMin);
+  });
+
+  const csScore = totalTargetCS > 0 ? Math.min(10, (totalCSForMin / totalTargetCS) * 10) : 0;
   
   const visionScore = Math.min(10, (parseFloat(avgWardsPerMin) / 0.60) * 10);
   

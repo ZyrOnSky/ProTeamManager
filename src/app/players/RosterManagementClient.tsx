@@ -77,6 +77,7 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
     // Calculate CS/m and Vis/m for Score
     let totalMinutes = 0;
     let totalCS = 0;
+    let totalTargetCS = 0;
     let totalVis = 0;
     
     matches.forEach((m: any) => {
@@ -84,15 +85,26 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
       totalMinutes += duration;
       totalCS += (m.cs || 0);
       totalVis += (m.visionWards || 0) + (m.wardsPlaced || 0);
+
+      // Calculate Target CS based on Role
+      let targetCSPerMin = 10.0; // Default (TOP, MID, ADC)
+      const role = m.position || player.playerProfile?.position || "MID";
+      
+      if (role === "JUNGLE") targetCSPerMin = 8.0;
+      else if (role === "SUPPORT") targetCSPerMin = 2.0;
+      
+      totalTargetCS += (duration * targetCSPerMin);
     });
     
-    const csPerMin = totalMinutes > 0 ? totalCS / totalMinutes : 0;
     const visPerMin = totalMinutes > 0 ? totalVis / totalMinutes : 0;
     
     // Scores (0-10)
     const wrScore = Math.min(10, (winRateVal / 70) * 10);
     const kdaScore = Math.min(10, (kdaVal / 5.0) * 10);
-    const csScore = Math.min(10, (csPerMin / 10.0) * 10);
+    
+    // CS Score based on Target CS
+    const csScore = totalTargetCS > 0 ? Math.min(10, (totalCS / totalTargetCS) * 10) : 0;
+    
     const visScore = Math.min(10, (visPerMin / 0.60) * 10);
     
     const overallScore = Math.round((wrScore + kdaScore + csScore + visScore) * 2.5);
@@ -221,13 +233,15 @@ export function RosterManagementClient({ players, staff, lineups, currentUserRol
             const isCaptain = player.playerProfile?.isCaptain;
 
             // Determine score color
-            let scoreColor = "text-slate-400";
+            let scoreColor = "text-slate-600"; // Default (No records)
             if (stats.score !== "-") {
                 const score = stats.score as number;
                 if (score >= 90) scoreColor = "text-cyan-400";
-                else if (score >= 75) scoreColor = "text-yellow-400";
-                else if (score >= 60) scoreColor = "text-slate-200";
-                else scoreColor = "text-orange-400";
+                else if (score >= 80) scoreColor = "text-green-400";
+                else if (score >= 70) scoreColor = "text-yellow-400";
+                else if (score >= 60) scoreColor = "text-orange-400";
+                else if (score >= 50) scoreColor = "text-red-300";
+                else scoreColor = "text-red-700";
             }
 
             return (
