@@ -132,7 +132,7 @@ export function MusicPlayer() {
 
   // 🎵 AUDIO VISUALIZER (Real-time Beat Detection)
   useEffect(() => {
-    let animationFrameId: number;
+    let animationFrameId: number | null = null;
 
     const setupAudioContext = () => {
       if (!audioContextRef.current) {
@@ -289,21 +289,21 @@ export function MusicPlayer() {
       }
     };
 
-    if (isPlaying) {
-      setupAudioContext();
-      animate();
-    } else {
-      if (buttonRef.current) buttonRef.current.style.transform = 'scale(1)';
-      if (ringRef.current) {
-        ringRef.current.style.transform = 'scale(1)';
-        ringRef.current.style.opacity = '0';
+      if (isPlaying) {
+        setupAudioContext();
+        animate();
+      } else {
+        if (buttonRef.current) buttonRef.current.style.transform = 'scale(1)';
+        if (ringRef.current) {
+          ringRef.current.style.transform = 'scale(1)';
+          ringRef.current.style.opacity = '0';
+        }
+        if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
       }
-      cancelAnimationFrame(animationFrameId);
-    }
 
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
+      return () => {
+        if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
+      };
   }, [isPlaying, isExpanded, currentTrackIndex]);
 
   // Notificación de "Ahora Suena"

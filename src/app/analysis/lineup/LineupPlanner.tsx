@@ -271,8 +271,12 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
                   ? stats.matches
                   : parseInt(String(stats.matches), 10) || 0;
 
-                if (matchesCount > 0 && stats.score > bestScore) {
-                  bestScore = stats.score;
+                const scoreNum = typeof stats.score === 'number'
+                  ? stats.score
+                  : parseInt(String(stats.score), 10) || 0;
+
+                if (matchesCount > 0 && scoreNum > bestScore) {
+                  bestScore = scoreNum;
                   bestFilters = currentFilters;
                 }
               }
@@ -386,9 +390,12 @@ export function LineupPlanner({ players, lineups, savedConfigs }: LineupPlannerP
           const currentFilters = { side, allocation: alloc, style: dbStyle };
           const stats = getPlayerRoleStats(playerId, roleId, currentFilters);
           
-          if (stats && stats.score > bestScore) {
-            bestScore = stats.score;
-            bestFilters = currentFilters;
+          if (stats) {
+            const scoreNum = typeof stats.score === 'number' ? stats.score : parseInt(String(stats.score), 10) || 0;
+            if (scoreNum > bestScore) {
+              bestScore = scoreNum;
+              bestFilters = currentFilters;
+            }
           }
         }
       }
